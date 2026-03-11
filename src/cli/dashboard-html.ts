@@ -241,6 +241,7 @@ button.active { border-color: var(--accent); color: var(--accent); }
   font-size: 11px;
   font-family: var(--font-mono);
   padding: 2px 6px;
+  margin-right: 8px;
   border-radius: 4px;
   border: 1px solid var(--border);
   color: var(--text-secondary);
