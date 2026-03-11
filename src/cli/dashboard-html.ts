@@ -1,6 +1,7 @@
-export function getDashboardHtml(): string {
+export function getDashboardHtml(version: string): string {
+  const footer = '\n<footer><div>Whetstone MCP v' + version + ' · MIT License</div><div><a href="https://github.com/frontier-collective/whetstone-mcp">GitHub</a> · <a href="https://www.npmjs.com/package/@frontier-collective/whetstone-mcp">npm</a> · Built by <a href="https://github.com/frontier-collective">Frontier Collective</a></div></footer>\n';
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>Whetstone Dashboard</title>\n<style>\n'
-+ STYLES + '\n</style>\n</head>\n<body>\n' + BODY + '\n<script>\n' + SCRIPT + '\n</script>\n</body>\n</html>';
++ STYLES + '\n</style>\n</head>\n<body>\n<main>\n' + BODY + '\n</main>\n' + footer + '\n<script>\n' + SCRIPT + '\n</script>\n</body>\n</html>';
 }
 
 // ── Styles ────────────────────────────────────────────────────────────
@@ -28,8 +29,14 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  padding: 24px;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  padding: 24px;
 }
 
 header {
@@ -266,6 +273,23 @@ details .detail-body {
   color: var(--accent);
   margin-left: 4px;
 }
+
+footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  line-height: 1.8;
+}
+
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+footer a:hover { text-decoration: underline; }
 
 @media (max-width: 768px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }

@@ -48,13 +48,14 @@ export async function runDashboard(args: string[]): Promise<void> {
   const { getDb, closeDb } = await import("../db/connection.js");
   getDb(); // fail fast if db can't initialize
 
+  const { VERSION } = await import("../lib/version.js");
   const { stats } = await import("../tools/stats.js");
   const { list } = await import("../tools/list.js");
   const { getConstraints } = await import("../tools/get-constraints.js");
   const { search } = await import("../tools/search.js");
   const { patterns } = await import("../tools/patterns.js");
 
-  const html = getDashboardHtml();
+  const html = getDashboardHtml(VERSION);
 
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     const url = new URL(req.url ?? "/", `http://localhost:${port}`);

@@ -1,6 +1,6 @@
 import { createRequire } from "module";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
-import { dirname } from "path";
+import { dirname, resolve } from "path";
 import { runMigrations } from "./migrations.js";
 
 // sql.js doesn't have clean ESM exports — use createRequire
@@ -143,12 +143,20 @@ export class DatabaseWrapper {
 }
 
 let db: DatabaseWrapper | null = null;
+let resolvedDbPath: string | null = null;
+
+export function getDbPath(): string {
+  if (resolvedDbPath) return resolvedDbPath;
+  const raw = process.env.WHETSTONE_DB || ".whetstone/whetstone.db";
+  return resolve(raw);
+}
 
 export function getDb(): DatabaseWrapper {
   if (db) return db;
 
-  const dbPath = process.env.WHETSTONE_DB || ".whetstone/whetstone.db";
-  db = new DatabaseWrapper(dbPath);
+  const raw = process.env.WHETSTONE_DB || ".whetstone/whetstone.db";
+  resolvedDbPath = resolve(raw);
+  db = new DatabaseWrapper(resolvedDbPath);
 
   // Run migrations with foreign keys off
   db.pragma("foreign_keys = OFF");

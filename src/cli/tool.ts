@@ -45,6 +45,10 @@ export async function runTool(command: string, args: string[]): Promise<void> {
     process.env.WHETSTONE_DB = dbPath;
   }
 
+  // Show which database is being used
+  const { getDbPath } = await import("../db/connection.js");
+  console.error(`db: ${getDbPath()}`);
+
   try {
     switch (command) {
       case "reject": {
