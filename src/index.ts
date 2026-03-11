@@ -28,6 +28,9 @@ if (cliCommand === "init") {
 } else if (cliCommand === "-h" || cliCommand === "--help" || cliCommand === "help") {
   const { runHelp } = await import("./cli/help.js");
   await runHelp();
+} else if (cliCommand === "clear-db") {
+  const { runClearDb } = await import("./cli/clear-db.js");
+  await runClearDb(process.argv.slice(3));
 } else if (cliCommand && TOOL_COMMANDS.has(cliCommand)) {
   const { runTool } = await import("./cli/tool.js");
   await runTool(cliCommand, process.argv.slice(3));

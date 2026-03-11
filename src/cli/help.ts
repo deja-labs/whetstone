@@ -41,6 +41,7 @@ export async function runHelp(): Promise<void> {
     "",
     `  ${YELLOW}Diagnostics${RESET}`,
     `  ${CYAN}db-path${RESET}             Print the resolved database path`,
+    `  ${CYAN}clear-db${RESET}            Delete all data and recreate empty database`,
     "",
     `  ${DIM}(none)${RESET}              Start MCP server (used by agent config, not run manually)`,
     "",
