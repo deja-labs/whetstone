@@ -43,10 +43,10 @@ class WhetConstraints extends WhetBase {
       '<input type="text" id="cf-search" class="wh-filter-input" placeholder="Search constraints..." oninput="debounceConstraintSearch()">' +
       '<button class="wh-filter-btn" onclick="clearConstraintFilters()">Clear</button>' +
     '</div>' +
-    '<div class="wh-grid" id="constraints-summary"></div>' +
+    '<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4" id="constraints-summary"></div>' +
     '<div>' +
       '<div id="constraints-count" class="text-xs text-muted mb-4 font-mono tracking-wide"></div>' +
-      '<div id="constraints-list" class="wh-grid"></div>' +
+      '<div id="constraints-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>' +
     '</div>' +
     '</div>';
   }
@@ -155,7 +155,7 @@ class WhetConstraints extends WhetBase {
         }
       } catch(e) {}
 
-      html += '<div class="wh-card wh-col-2" onclick="openConstraint(\\'' + esc(c.id) + '\\')">';
+      html += '<div class="wh-card" onclick="openConstraint(\\'' + esc(c.id) + '\\')">';
       html += '<div class="text-sm font-medium text-primary mb-2">' + esc(c.title) + '</div>';
       html += '<div class="text-[13px] text-muted leading-normal line-clamp-2 mb-3">' + esc(c.rule) + '</div>';
       html += '<div class="wh-flex-wrap">';

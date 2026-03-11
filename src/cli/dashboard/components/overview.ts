@@ -16,12 +16,12 @@ class WhetOverview extends WhetBase {
 
   _template() {
     return '<div class="wh-page">' +
-      '<section class="wh-grid" id="stats-cards"></section>' +
-      '<section class="wh-grid">' +
+      '<section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4" id="stats-cards"></section>' +
+      '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
         '<div class="wh-section"><h2>Rejections by Domain</h2><div id="domain-bars"></div></div>' +
         '<div class="wh-section"><h2>Most Applied Constraints</h2><div id="applied-list"></div></div>' +
       '</section>' +
-      '<section class="wh-grid">' +
+      '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
         '<div class="wh-section"><h2>Unencoded Rejections</h2><div id="unencoded-list"></div></div>' +
         '<div class="wh-section"><h2>Recently Encoded</h2><div id="recently-encoded-list"></div></div>' +
       '</section>' +
@@ -29,11 +29,11 @@ class WhetOverview extends WhetBase {
         '<h2>Encode These Next <span class="text-[11px] text-muted font-mono font-normal">\\u2014 recurring rejection patterns without constraints</span></h2>' +
         '<div id="patterns-list"></div>' +
       '</section>' +
-      '<section class="wh-grid" id="gaps-graduation-section" style="display:none">' +
+      '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="gaps-graduation-section" style="display:none">' +
         '<div class="wh-section" id="domain-gaps-section"><h2>Domain Gaps <span class="text-[11px] text-muted font-mono font-normal">\\u2014 taste being lost</span></h2><div id="domain-gaps-list"></div></div>' +
         '<div class="wh-section" id="graduation-section"><h2>Ready to Graduate <span class="text-[11px] text-muted font-mono font-normal">\\u2014 move to CLAUDE.md</span></h2><div id="graduation-list"></div></div>' +
       '</section>' +
-      '<section class="wh-grid" id="dead-elevation-section">' +
+      '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="dead-elevation-section">' +
         '<div class="wh-section" id="dead-section" style="display:none"><h2>Fading Constraints <span class="text-[11px] text-muted font-mono font-normal">\\u2014 applied before, silent now</span></h2><div id="dead-list"></div></div>' +
         '<div class="wh-section"><h2>Elevation Candidates</h2><div id="elevation-list"></div></div>' +
       '</section>' +
@@ -282,7 +282,9 @@ class WhetOverview extends WhetBase {
       wrapper.style.display = 'none';
     } else {
       wrapper.style.display = '';
-      wrapper.style.gridTemplateColumns = (gapsHidden || gradHidden) ? '1fr' : '1fr 1fr';
+      wrapper.className = (gapsHidden || gradHidden)
+        ? 'grid grid-cols-1 gap-4'
+        : 'grid grid-cols-1 lg:grid-cols-2 gap-4';
     }
   }
 
@@ -290,7 +292,9 @@ class WhetOverview extends WhetBase {
     var wrapper = document.getElementById('dead-elevation-section');
     var dead = document.getElementById('dead-section');
     var deadHidden = dead.style.display === 'none';
-    wrapper.style.gridTemplateColumns = deadHidden ? '1fr' : '1fr 1fr';
+    wrapper.className = deadHidden
+      ? 'grid grid-cols-1 gap-4'
+      : 'grid grid-cols-1 lg:grid-cols-2 gap-4';
   }
 
   _renderDomainGaps(s) {

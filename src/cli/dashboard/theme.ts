@@ -62,9 +62,8 @@ export const COMPAT_VARS = `
 //   .wh-container    Max-width wrapper, centered, responsive horizontal padding
 //   .wh-page         Vertical flex column with consistent gap between siblings
 //
-//   .wh-grid         Single auto-fit grid — items spread evenly
-//   .wh-col-2        Span two grid tracks (for wider items like cards)
-//   .wh-col-full     Span all grid tracks
+//   Grid:            Use explicit Tailwind grid-cols-* at each usage site.
+//                    See /* Grid */ comment block in CUSTOM_CSS for the palette.
 //
 //   .wh-section      Boxed content area with heading bar
 //   .wh-stat         Individual stat display (value + label + optional delta)
@@ -83,8 +82,11 @@ export const COMPAT_VARS = `
 export const CUSTOM_CSS = `
 
 /* ── Reset ── */
+/* Tailwind v4 preflight handles the base reset.
+   Do NOT add an unlayered * { padding:0 } here — it overrides
+   Tailwind's @layer utilities due to cascade layer precedence. */
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { box-sizing: border-box; }
 
 body {
   background: radial-gradient(ellipse at top, #111820 0%, var(--color-surface) 60%);
@@ -99,27 +101,24 @@ body {
 /* ── Page layout ── */
 
 .wh-page {
-  @apply flex flex-col gap-8;
+  @apply flex flex-col gap-4;
 }
 
 /* ── Grid ── */
 /*
- * One grid class. auto-fit means items always spread evenly:
- *   6 stats  → 6 columns       2 sections → 2 columns
- *   4 stats  → 4 columns       1 section  → full width
- * For wider items (cards), add .wh-col-2 to span two tracks.
+ * No shared grid class. Each usage site declares explicit columns via
+ * Tailwind utilities so the intent is always clear:
+ *
+ *   Stats row (6):  grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4
+ *   Stats row (7):  grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4
+ *   Stats row (4):  grid grid-cols-2 sm:grid-cols-4 gap-4
+ *   Two-panel pair: grid grid-cols-1 lg:grid-cols-2 gap-4
+ *   Card list:      grid grid-cols-1 lg:grid-cols-2 gap-4
+ *   Full-width:     no grid — stacks naturally inside .wh-page
+ *
+ * Dynamic show/hide: toggle lg:grid-cols-2 ↔ grid-cols-1 via className,
+ * never via inline style.gridTemplateColumns.
  */
-
-.wh-grid {
-  @apply grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4;
-}
-.wh-col-2 { grid-column: span 2; }
-.wh-col-full { grid-column: 1 / -1; }
-
-@media (max-width: 640px) {
-  .wh-grid { grid-template-columns: 1fr; }
-  .wh-col-2 { grid-column: auto; }
-}
 .wh-flex-row {
   @apply flex items-center gap-3;
 }
@@ -233,9 +232,16 @@ body {
 }
 
 /* ── Modal ── */
+/*
+ * Modal layout follows the standard Tailwind dialog pattern:
+ *   - Container: no padding (header + body own theirs)
+ *   - Header:    px-6 pt-5 pb-4, border-b, sticky
+ *   - Body:      p-6, flex col gap-5 for field spacing
+ *   - Fields:    label + value, no margin/border (parent gap handles spacing)
+ *   - Sections:  <hr> for visual breaks between field groups
+ */
 
-.wh-modal-field { @apply mb-5 pb-5 border-b border-edge-subtle; }
-.wh-modal-field:last-child { @apply mb-0 pb-0 border-b-0; }
+.wh-modal-field {}
 .wh-field-label {
   @apply text-[11px] font-bold text-muted uppercase tracking-widest mb-2 font-mono;
 }

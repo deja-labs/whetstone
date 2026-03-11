@@ -208,21 +208,21 @@ async function openRejection(id) {
 
   try {
     var r = await fetchJson('/api/rejection/' + encodeURIComponent(id));
-    var html = '<div class="flex items-start justify-between p-6 pb-5 border-b border-edge sticky top-0 bg-card/95 backdrop-blur-md rounded-t-xl z-10">';
-    html += '<div><div class="text-[11px] font-mono text-muted uppercase tracking-widest mb-2">Rejection</div>';
+    var html = '<div style="padding:24px 24px 20px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--color-edge);position:sticky;top:0;background:rgba(28,33,40,0.95);backdrop-filter:blur(12px);border-radius:12px 12px 0 0;z-index:10">';
+    html += '<div><div class="text-[11px] font-mono text-muted uppercase tracking-widest" style="margin-bottom:8px">Rejection</div>';
     html += '<h2 class="text-base font-semibold text-primary leading-snug">' + esc(r.description) + '</h2></div>';
-    html += '<button class="bg-transparent border-none text-muted text-xl cursor-pointer ml-4 leading-none shrink-0 hover:text-primary w-8 h-8 rounded-md flex items-center justify-center hover:bg-raised transition-colors" onclick="closeModal()">\\u00D7</button></div>';
-    html += '<div class="p-6">';
-    html += '<div class="wh-flex-wrap mb-5">' + domainBadge(r.domain) + '</div>';
+    html += '<button class="bg-transparent border-none text-muted text-xl cursor-pointer leading-none hover:text-primary" style="margin-left:16px;flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px" onmouseover="this.style.background=\\'var(--color-raised)\\'" onmouseout="this.style.background=\\'transparent\\'" onclick="closeModal()">\\u00D7</button></div>';
+    html += '<div style="padding:24px;display:flex;flex-direction:column;gap:20px">';
+    html += '<div class="wh-flex-wrap">' + domainBadge(r.domain) + '</div>';
     html += modalField('Description', r.description);
     html += modalField('Reasoning', r.reasoning, { showEmpty: true });
     html += modalField('Raw Output', r.raw_output, { code: true, showEmpty: true });
     if (r.constraint_id) {
-      html += '<div class="wh-modal-field"><div class="wh-field-label">Encoded By</div><div class="wh-field-value flex items-center gap-3"><a href="#" onclick="event.preventDefault();openConstraint(\\'' + esc(r.constraint_id) + '\\')" class="text-accent no-underline font-mono text-xs">' + esc(r.constraint_id) + ' \\u2192 View constraint</a><button onclick="unlinkRejection(\\'' + esc(r.id) + '\\')" class="text-red border border-red/30 bg-glow-red rounded-md text-[11px] px-2 py-1 cursor-pointer hover:bg-red hover:text-surface transition-colors">Unlink</button></div></div>';
+      html += '<div class="wh-modal-field"><div class="wh-field-label">Encoded By</div><div class="wh-field-value flex items-center gap-3"><a href="#" onclick="event.preventDefault();openConstraint(\\'' + esc(r.constraint_id) + '\\')" class="text-accent no-underline font-mono text-xs">' + esc(r.constraint_id) + ' \\u2192 View constraint</a><button onclick="unlinkRejection(\\'' + esc(r.id) + '\\')" class="text-red border border-red/30 bg-glow-red rounded-md text-[11px] px-3 py-1.5 cursor-pointer hover:bg-red hover:text-surface transition-colors">Unlink</button></div></div>';
     } else {
       html += modalField('Encoded By', 'Not yet encoded', { showEmpty: true });
     }
-    html += '<hr class="border-none border-t border-edge-subtle my-6">';
+    html += '<hr style="border:none;border-top:1px solid var(--color-edge-subtle)">';
     html += modalField('ID', r.id, { mono: true });
     html += modalField('Created', formatDate(r.created_at), { mono: true });
     html += '</div>';
@@ -241,12 +241,12 @@ async function openConstraint(id) {
 
   try {
     var c = await fetchJson('/api/constraint/' + encodeURIComponent(id));
-    var html = '<div class="flex items-start justify-between p-6 pb-5 border-b border-edge sticky top-0 bg-card/95 backdrop-blur-md rounded-t-xl z-10">';
-    html += '<div><div class="text-[11px] font-mono text-muted uppercase tracking-widest mb-2">Constraint</div>';
+    var html = '<div style="padding:24px 24px 20px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--color-edge);position:sticky;top:0;background:rgba(28,33,40,0.95);backdrop-filter:blur(12px);border-radius:12px 12px 0 0;z-index:10">';
+    html += '<div><div class="text-[11px] font-mono text-muted uppercase tracking-widest" style="margin-bottom:8px">Constraint</div>';
     html += '<h2 class="text-base font-semibold text-primary leading-snug">' + esc(c.title) + '</h2></div>';
-    html += '<button class="bg-transparent border-none text-muted text-xl cursor-pointer ml-4 leading-none shrink-0 hover:text-primary w-8 h-8 rounded-md flex items-center justify-center hover:bg-raised transition-colors" onclick="closeModal()">\\u00D7</button></div>';
-    html += '<div class="p-6">';
-    html += '<div class="wh-flex-wrap mb-5">' + domainBadge(c.domain) + severityBadge(c.severity) + '<span class="wh-badge">' + esc(c.category) + '</span><span class="wh-badge">' + esc(c.status) + '</span></div>';
+    html += '<button class="bg-transparent border-none text-muted text-xl cursor-pointer leading-none hover:text-primary" style="margin-left:16px;flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px" onmouseover="this.style.background=\\'var(--color-raised)\\'" onmouseout="this.style.background=\\'transparent\\'" onclick="closeModal()">\\u00D7</button></div>';
+    html += '<div style="padding:24px;display:flex;flex-direction:column;gap:20px">';
+    html += '<div class="wh-flex-wrap">' + domainBadge(c.domain) + severityBadge(c.severity) + '<span class="wh-badge">' + esc(c.category) + '</span><span class="wh-badge">' + esc(c.status) + '</span></div>';
     html += modalField('Rule', c.rule);
     html += modalField('Reasoning', c.reasoning, { showEmpty: true });
     html += modalField('Bad Example', c.rejected_example, { code: true, showEmpty: true });
@@ -263,7 +263,7 @@ async function openConstraint(id) {
       html += modalField('Tags', null, { showEmpty: true });
     }
     html += modalField('Source', c.source, { showEmpty: true });
-    html += '<hr class="border-none border-t border-edge-subtle my-6">';
+    html += '<hr style="border:none;border-top:1px solid var(--color-edge-subtle)">';
     html += modalField('Times Applied', String(c.times_applied || 0), { mono: true });
     html += modalField('Last Applied', c.last_applied_at ? formatDate(c.last_applied_at) : null, { mono: true, showEmpty: true });
     html += modalField('ID', c.id, { mono: true });
@@ -271,17 +271,17 @@ async function openConstraint(id) {
     html += modalField('Updated', formatDate(c.updated_at), { mono: true });
     // Linked rejections
     var linked = c.linked_rejections || [];
-    html += '<hr class="border-none border-t border-edge-subtle my-6">';
+    html += '<hr style="border:none;border-top:1px solid var(--color-edge-subtle)">';
     html += '<div class="wh-modal-field"><div class="wh-field-label">Linked Rejections (' + linked.length + ')</div>';
     if (linked.length > 0) {
-      html += '<div class="mt-3">';
+      html += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">';
       for (var i = 0; i < linked.length; i++) {
         var lr = linked[i];
-        html += '<div class="py-3 px-4 bg-raised rounded-md mb-3 cursor-pointer border border-edge-subtle hover:border-accent hover:bg-card transition-all duration-150" onclick="openRejection(\\'' + esc(lr.id) + '\\')">';
-        html += '<div class="flex justify-between items-start gap-3">';
+        html += '<div class="bg-raised cursor-pointer border border-edge-subtle hover:border-accent hover:bg-card transition-all duration-150" style="padding:12px 16px;border-radius:6px" onclick="openRejection(\\'' + esc(lr.id) + '\\')">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">';
         html += '<div><div class="text-[13px] text-primary">' + esc(lr.description) + '</div>';
-        html += '<div class="text-[11px] text-muted mt-1">' + esc(lr.domain) + ' \\u00B7 ' + timeAgo(lr.created_at) + '</div></div>';
-        html += '<button onclick="event.stopPropagation();unlinkFromConstraint(\\'' + esc(lr.id) + '\\',\\'' + esc(c.id) + '\\')" class="text-red border border-red/30 bg-glow-red rounded-md text-[10px] px-2 py-1 cursor-pointer shrink-0 hover:bg-red hover:text-surface transition-colors">Unlink</button>';
+        html += '<div class="text-[11px] text-muted" style="margin-top:4px">' + esc(lr.domain) + ' \\u00B7 ' + timeAgo(lr.created_at) + '</div></div>';
+        html += '<button onclick="event.stopPropagation();unlinkFromConstraint(\\'' + esc(lr.id) + '\\',\\'' + esc(c.id) + '\\')" class="text-red border border-red/30 bg-glow-red rounded-md text-[10px] px-3 py-1.5 cursor-pointer shrink-0 hover:bg-red hover:text-surface transition-colors">Unlink</button>';
         html += '</div></div>';
       }
       html += '</div>';
@@ -290,9 +290,9 @@ async function openConstraint(id) {
     }
     html += '</div>';
     if (linked.length === 0) {
-      html += '<div class="text-center py-4">';
-      html += '<button onclick="deleteConstraint(\\'' + esc(c.id) + '\\')" class="text-red border border-red/30 bg-glow-red rounded-md text-[13px] py-3 px-5 cursor-pointer hover:bg-red hover:text-surface transition-colors font-medium">Delete Constraint</button>';
-      html += '<div class="text-[11px] text-muted mt-2">No linked rejections \\u2014 safe to delete</div>';
+      html += '<div style="text-align:center;padding:16px 0;border-top:1px solid var(--color-edge-subtle)">';
+      html += '<button onclick="deleteConstraint(\\'' + esc(c.id) + '\\')" class="text-red border border-red/30 bg-glow-red rounded-md text-[13px] cursor-pointer hover:bg-red hover:text-surface transition-colors font-medium" style="padding:12px 20px">Delete Constraint</button>';
+      html += '<div class="text-[11px] text-muted" style="margin-top:8px">No linked rejections \\u2014 safe to delete</div>';
       html += '</div>';
     }
     html += '</div>';
