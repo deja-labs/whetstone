@@ -75,6 +75,39 @@ export async function runDashboard(args: string[]): Promise<void> {
             ? parseInt(url.searchParams.get("limit")!, 10)
             : undefined,
         }));
+      } else if (path === "/api/constraints/all") {
+        const db = getDb();
+        const conditions: string[] = [];
+        const params: string[] = [];
+        const domain = url.searchParams.get("domain");
+        const severity = url.searchParams.get("severity");
+        const status = url.searchParams.get("status");
+        const category = url.searchParams.get("category");
+        const q = url.searchParams.get("q");
+        if (domain) { conditions.push("c.domain = ?"); params.push(domain); }
+        if (severity) { conditions.push("c.severity = ?"); params.push(severity); }
+        if (status) { conditions.push("c.status = ?"); params.push(status); }
+        if (category) { conditions.push("c.category = ?"); params.push(category); }
+        if (q) { conditions.push("(c.title LIKE ? OR c.rule LIKE ? OR c.tags LIKE ?)"); params.push(`%${q}%`, `%${q}%`, `%${q}%`); }
+        const where = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
+        const sortParam = url.searchParams.get("sort") ?? "newest";
+        const orderMap: Record<string, string> = {
+          newest: "c.created_at DESC",
+          applied: "c.times_applied DESC, c.created_at DESC",
+          severity: "CASE c.severity WHEN 'critical' THEN 1 WHEN 'important' THEN 2 ELSE 3 END, c.created_at DESC",
+          alpha: "c.title ASC",
+        };
+        const order = orderMap[sortParam] ?? orderMap.newest;
+        const rows = db.prepare(`SELECT c.*, (SELECT COUNT(*) FROM rejections WHERE constraint_id = c.id) as linked_rejection_count FROM constraints c ${where} ORDER BY ${order}`).all(...params);
+        sendJson(res, 200, rows);
+      } else if (path === "/api/constraints/summary") {
+        const db = getDb();
+        const byStatus = db.prepare("SELECT status, COUNT(*) as count FROM constraints GROUP BY status").all();
+        const bySeverity = db.prepare("SELECT severity, COUNT(*) as count FROM constraints GROUP BY severity").all();
+        const byDomain = db.prepare("SELECT domain, COUNT(*) as count FROM constraints GROUP BY domain ORDER BY count DESC").all();
+        const byCategory = db.prepare("SELECT category, COUNT(*) as count FROM constraints GROUP BY category ORDER BY count DESC").all();
+        const total = db.prepare("SELECT COUNT(*) as count FROM constraints").get() as { count: number };
+        sendJson(res, 200, { total: total.count, by_status: byStatus, by_severity: bySeverity, by_domain: byDomain, by_category: byCategory });
       } else if (path === "/api/constraints") {
         sendJson(res, 200, getConstraints({
           domain: url.searchParams.get("domain") ?? undefined,
