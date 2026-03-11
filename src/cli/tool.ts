@@ -8,6 +8,7 @@ import {
   formatUpdateResult,
   formatPatternsResult,
   formatStatsResult,
+  formatListResult,
 } from "./format.js";
 
 function parseArgs(args: string[]): Map<string, string> {
@@ -142,6 +143,17 @@ export async function runTool(command: string, args: string[]): Promise<void> {
           since: flags.get("since"),
         });
         console.log(formatPatternsResult(result));
+        break;
+      }
+
+      case "list": {
+        const { list } = await import("../tools/list.js");
+        const result = list({
+          domain: flags.get("domain"),
+          status: flags.get("status") as "encoded" | "unencoded" | "all" | undefined,
+          limit: flags.get("limit") ? parseInt(flags.get("limit")!, 10) : undefined,
+        });
+        console.log(formatListResult(result));
         break;
       }
 

@@ -2,6 +2,7 @@ import type { Constraint, Rejection } from "../lib/types.js";
 import type { SearchResult } from "../tools/search.js";
 import type { PatternCluster } from "../tools/patterns.js";
 import type { StatsResult } from "../tools/stats.js";
+import type { ListResult } from "../tools/list.js";
 
 export function formatRejectionResult(rejection: Rejection): string {
   return [
@@ -120,4 +121,23 @@ export function formatStatsResult(s: StatsResult): string {
   }
 
   return lines.join("\n");
+}
+
+export function formatListResult(result: ListResult): string {
+  if (result.rejections.length === 0) {
+    return "No rejections found.";
+  }
+
+  const lines = result.rejections.map((r) => {
+    const encoded = r.constraint_id ? ` → encoded (${r.constraint_id})` : " [unencoded]";
+    let line = `[${r.domain}] ${r.description}${encoded} (${r.id})`;
+    if (r.reasoning) line += `\n  Why: ${r.reasoning}`;
+    return line;
+  });
+
+  const showing = result.rejections.length < result.total
+    ? ` (showing ${result.rejections.length} of ${result.total})`
+    : "";
+
+  return `${result.total} rejection(s)${showing}:\n\n${lines.join("\n\n")}`;
 }

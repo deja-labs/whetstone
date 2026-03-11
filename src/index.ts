@@ -7,7 +7,7 @@ const cliCommand = process.argv[2];
 
 const TOOL_COMMANDS = new Set([
   "reject", "constrain", "get-constraints", "search",
-  "applied", "link", "update-constraint", "patterns", "stats",
+  "applied", "link", "update-constraint", "patterns", "stats", "list",
 ]);
 
 if (cliCommand === "init") {
@@ -183,6 +183,21 @@ async function startServer(): Promise<void> {
       const { patterns } = await import("./tools/patterns.js");
       const results = patterns(input);
       return { content: [{ type: "text", text: fmt.formatPatternsResult(results) }] };
+    },
+  );
+
+  server.tool(
+    "list",
+    "List rejections with optional filters. Use this to browse all rejections, or filter by domain and encoded/unencoded status.",
+    {
+      domain: z.string().optional().describe('Filter by domain, e.g. "frontend", "backend"'),
+      status: z.enum(["encoded", "unencoded", "all"]).optional().describe("Filter by encoding status (default: all)"),
+      limit: z.number().optional().describe("Maximum number of rejections to return (default: 50)"),
+    },
+    async (input) => {
+      const { list } = await import("./tools/list.js");
+      const result = list(input);
+      return { content: [{ type: "text", text: fmt.formatListResult(result) }] };
     },
   );
 
