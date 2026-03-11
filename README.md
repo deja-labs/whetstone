@@ -137,6 +137,7 @@ The following tools are now available in your agent conversations:
 | `patterns` | Surface recurring rejection themes not yet encoded |
 | `list` | Browse rejections filtered by domain and encoded/unencoded status |
 | `stats` | Get rejection and constraint statistics |
+| `db_path` | Returns the resolved database file path (diagnostics) |
 
 No special syntax required — your agent sees these as available tools and can use them naturally in conversation.
 
@@ -420,6 +421,17 @@ whetstone link --id 01ABC123 --rejection-ids 01DEF456,01GHI789
 # Evolve a constraint
 whetstone update-constraint --id 01ABC123 --severity critical
 whetstone update-constraint --id 01ABC123 --status deprecated
+```
+
+### Diagnostics
+
+```bash
+# Show which database file is being used
+whetstone db-path
+
+# Wipe all data and recreate empty database (prompts for confirmation)
+whetstone clear-db
+whetstone clear-db --force    # skip confirmation (for scripting)
 ```
 
 All commands accept `--db <path>` to override the database location.
