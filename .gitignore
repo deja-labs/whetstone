@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tsbuildinfo
+# SQLite WAL files (transient, recreated automatically)
+*.db-wal
+*.db-shm

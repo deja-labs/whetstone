@@ -1,0 +1,63 @@
+const CYAN = "\x1b[36m";
+const GREEN = "\x1b[32m";
+const YELLOW = "\x1b[33m";
+const BOLD = "\x1b[1m";
+const DIM = "\x1b[2m";
+const RESET = "\x1b[0m";
+
+export async function runHelp(): Promise<void> {
+  const { VERSION } = await import("../lib/version.js");
+  const lines = [
+    "",
+    `  ${BOLD}whetstone${RESET} ${DIM}v${VERSION}${RESET} — sharpen AI output by encoding human judgment`,
+    "",
+    `  ${YELLOW}Usage${RESET}`,
+    `  ${DIM}$${RESET} whetstone ${DIM}<command> [options]${RESET}`,
+    `  ${DIM}$${RESET} whetstone-mcp ${DIM}<command> [options]${RESET}  ${DIM}(alias)${RESET}`,
+    "",
+    `  ${YELLOW}Setup${RESET}`,
+    `  ${CYAN}init${RESET}                Set up .whetstone/ directory and database`,
+    `  ${CYAN}hook${RESET}                Install pre-push git hook only`,
+    "",
+    `  ${YELLOW}Capture${RESET}`,
+    `  ${CYAN}reject${RESET}              Log a rejection of AI output`,
+    `  ${CYAN}constrain${RESET}           Create a durable constraint from rejections`,
+    "",
+    `  ${YELLOW}Query${RESET}`,
+    `  ${CYAN}get-constraints${RESET}     Fetch active constraints for a domain`,
+    `  ${CYAN}search${RESET}              Free-text search across constraints and rejections`,
+    `  ${CYAN}patterns${RESET}            Surface recurring rejection themes`,
+    `  ${CYAN}stats${RESET}               Rejection and constraint statistics`,
+    `  ${CYAN}export${RESET}              Export constraints as markdown or JSON`,
+    "",
+    `  ${YELLOW}Management${RESET}`,
+    `  ${CYAN}applied${RESET}             Mark a constraint as applied (usage tracking)`,
+    `  ${CYAN}link${RESET}                Link rejections to a constraint`,
+    `  ${CYAN}update-constraint${RESET}   Refine, supersede, or deprecate a constraint`,
+    "",
+    `  ${DIM}(none)${RESET}              Start MCP server (used by agent config, not run manually)`,
+    "",
+    `  ${YELLOW}Common Options${RESET}`,
+    `  ${GREEN}--db${RESET} ${DIM}<path>${RESET}          Path to SQLite database (all commands)`,
+    `  ${GREEN}--domain${RESET} ${DIM}<name>${RESET}      Filter by domain`,
+    `  ${GREEN}--format${RESET} ${DIM}md|json${RESET}     Output format for export (default: markdown)`,
+    `  ${GREEN}--output${RESET} ${DIM}<file>${RESET}      Write export to file instead of stdout`,
+    "",
+    `  ${YELLOW}Examples${RESET}`,
+    `  ${DIM}$${RESET} whetstone init`,
+    `  ${DIM}$${RESET} whetstone reject --domain frontend --desc "Used useEffect for derived state"`,
+    `  ${DIM}$${RESET} whetstone constrain --domain frontend --category pattern \\`,
+    `      --title "No useEffect for derived state" \\`,
+    `      --rule "Compute derived values inline, never in useEffect"`,
+    `  ${DIM}$${RESET} whetstone get-constraints --domain frontend`,
+    `  ${DIM}$${RESET} whetstone search --query useEffect`,
+    `  ${DIM}$${RESET} whetstone applied --id 01ABC123`,
+    `  ${DIM}$${RESET} whetstone link --id 01ABC123 --rejection-ids 01DEF456,01GHI789`,
+    `  ${DIM}$${RESET} whetstone patterns`,
+    `  ${DIM}$${RESET} whetstone stats`,
+    `  ${DIM}$${RESET} whetstone export --domain backend --format json`,
+    `  ${DIM}$${RESET} whetstone update-constraint --id 01ABC123 --status deprecated`,
+    "",
+  ];
+  console.log(lines.join("\n"));
+}
