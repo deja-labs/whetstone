@@ -15,12 +15,12 @@ class WhetOverview extends WhetBase {
   }
 
   _template() {
-    return '<section class="grid grid-cols-6 gap-3 mb-8 max-lg:grid-cols-3 max-sm:grid-cols-2" id="stats-cards"></section>' +
-      '<section class="grid grid-cols-2 gap-5 mb-8 max-[900px]:grid-cols-1">' +
+    return '<section class="grid grid-cols-6 gap-4 mb-10 max-lg:grid-cols-3 max-sm:grid-cols-2" id="stats-cards"></section>' +
+      '<section class="grid grid-cols-2 gap-6 mb-10 max-[900px]:grid-cols-1">' +
         '<div class="wh-section !mb-0"><h2>Rejections by Domain</h2><div id="domain-bars"></div></div>' +
         '<div class="wh-section !mb-0"><h2>Most Applied Constraints</h2><div id="applied-list"></div></div>' +
       '</section>' +
-      '<section class="grid grid-cols-2 gap-5 mb-8 max-[900px]:grid-cols-1">' +
+      '<section class="grid grid-cols-2 gap-6 mb-10 max-[900px]:grid-cols-1">' +
         '<div class="wh-section !mb-0"><h2>Unencoded Rejections</h2><div id="unencoded-list"></div></div>' +
         '<div class="wh-section !mb-0"><h2>Recently Encoded</h2><div id="recently-encoded-list"></div></div>' +
       '</section>' +
@@ -28,11 +28,11 @@ class WhetOverview extends WhetBase {
         '<h2>Encode These Next <span class="text-[11px] text-muted font-mono font-normal">\\u2014 recurring rejection patterns without constraints</span></h2>' +
         '<div id="patterns-list"></div>' +
       '</section>' +
-      '<section class="grid grid-cols-2 gap-5 mb-8 max-[900px]:grid-cols-1" id="gaps-graduation-section" style="display:none">' +
+      '<section class="grid grid-cols-2 gap-6 mb-10 max-[900px]:grid-cols-1" id="gaps-graduation-section" style="display:none">' +
         '<div class="wh-section !mb-0" id="domain-gaps-section"><h2>Domain Gaps <span class="text-[11px] text-muted font-mono font-normal">\\u2014 taste being lost</span></h2><div id="domain-gaps-list"></div></div>' +
         '<div class="wh-section !mb-0" id="graduation-section"><h2>Ready to Graduate <span class="text-[11px] text-muted font-mono font-normal">\\u2014 move to CLAUDE.md</span></h2><div id="graduation-list"></div></div>' +
       '</section>' +
-      '<section class="grid grid-cols-2 gap-5 mb-8 max-[900px]:grid-cols-1" id="dead-elevation-section">' +
+      '<section class="grid grid-cols-2 gap-6 mb-10 max-[900px]:grid-cols-1" id="dead-elevation-section">' +
         '<div class="wh-section !mb-0" id="dead-section" style="display:none"><h2>Fading Constraints <span class="text-[11px] text-muted font-mono font-normal">\\u2014 applied before, silent now</span></h2><div id="dead-list"></div></div>' +
         '<div class="wh-section !mb-0"><h2>Elevation Candidates</h2><div id="elevation-list"></div></div>' +
       '</section>';
@@ -96,7 +96,7 @@ class WhetOverview extends WhetBase {
       var unencodedCount = d.count - encodedCount;
       var encodedPct = max > 0 ? Math.round((encodedCount / max) * 100) : 0;
       var unencodedPct = max > 0 ? Math.round((unencodedCount / max) * 100) : 0;
-      html += '<div class="flex items-center gap-2 mb-2">' +
+      html += '<div class="flex items-center gap-3 mb-3">' +
         '<div class="w-[120px] text-right text-[13px] font-mono text-muted shrink-0">' + esc(d.domain) + '</div>' +
         '<div class="flex-1 h-[22px] bg-raised rounded overflow-hidden flex">' +
           '<div class="bar-fill-encoded h-full bg-green" style="width:' + encodedPct + '%"></div>' +
@@ -166,7 +166,7 @@ class WhetOverview extends WhetBase {
       var r = visible[i];
       html += '<div class="wh-list-item clickable" onclick="openRejection(\\'' + esc(r.id) + '\\')">' +
         '<div class="title text-primary font-medium">' + esc(r.description) + '</div>' +
-        '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-1">' + domainBadge(r.domain) + '<span>' + timeAgo(r.created_at) + '</span></div></div>';
+        '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-2">' + domainBadge(r.domain) + '<span>' + timeAgo(r.created_at) + '</span></div></div>';
     }
     if (listResult.total > limit) {
       var remaining = listResult.total - limit;
@@ -187,7 +187,7 @@ class WhetOverview extends WhetBase {
       var r = visible[i];
       html += '<div class="wh-list-item clickable" onclick="openRejection(\\'' + esc(r.id) + '\\')">' +
         '<div class="title text-primary font-medium">' + esc(r.description) + '</div>' +
-        '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-1">' + domainBadge(r.domain) + '<span>' + timeAgo(r.created_at) + '</span></div></div>';
+        '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-2">' + domainBadge(r.domain) + '<span>' + timeAgo(r.created_at) + '</span></div></div>';
     }
     var remaining = el._total - (expanded ? 10 : items.length);
     if (expanded) {
@@ -214,7 +214,7 @@ class WhetOverview extends WhetBase {
       var r = items[i];
       html += '<div class="wh-list-item clickable" onclick="openRejection(\\'' + esc(r.id) + '\\')">' +
         '<div class="title text-primary font-medium">' + esc(r.description) + '</div>' +
-        '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-1">' + domainBadge(r.domain) +
+        '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-2">' + domainBadge(r.domain) +
         '<span>' + timeAgo(r.created_at) + '</span></div></div>';
     }
     el.innerHTML = html;
@@ -231,12 +231,12 @@ class WhetOverview extends WhetBase {
     var html = '';
     for (var i = 0; i < Math.min(patternsData.length, 5); i++) {
       var p = patternsData[i];
-      html += '<div class="p-4 bg-gradient-to-r from-glow-orange to-transparent rounded-lg mb-3 border border-edge border-l-[3px] border-l-orange">' +
-        '<div class="flex justify-between items-center mb-1.5">' +
+      html += '<div class="p-5 bg-gradient-to-r from-glow-orange to-transparent rounded-lg mb-4 border border-edge border-l-[3px] border-l-orange">' +
+        '<div class="flex justify-between items-center mb-2.5">' +
         domainBadge(p.domain) +
         '<span class="font-mono text-xs text-orange font-semibold">' + p.count + ' similar rejections</span>' +
         '</div>' +
-        '<div class="text-xs font-mono text-muted mb-1.5">Keywords: ' + esc(p.theme) + '</div>' +
+        '<div class="text-xs font-mono text-muted mb-2">Keywords: ' + esc(p.theme) + '</div>' +
         '<div class="pattern-examples text-[13px] text-primary leading-normal">';
       for (var j = 0; j < Math.min(p.descriptions.length, 3); j++) {
         html += '<div class="py-0.5">' + esc(p.descriptions[j]) + '</div>';
@@ -264,8 +264,8 @@ class WhetOverview extends WhetBase {
       var c = items[i];
       html += '<div class="wh-list-item clickable" onclick="openConstraint(\\'' + esc(c.id) + '\\')">' +
         '<div class="title text-primary font-medium">' + esc(c.title) + '</div>' +
-        '<div class="text-[13px] text-muted mt-1 pl-1 border-l-2 border-l-green leading-snug">' + esc(c.rule) + '</div>' +
-        '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-1">' + domainBadge(c.domain) + severityBadge(c.severity) +
+        '<div class="text-[13px] text-muted mt-2 pl-2 border-l-2 border-l-green leading-snug">' + esc(c.rule) + '</div>' +
+        '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-2">' + domainBadge(c.domain) + severityBadge(c.severity) +
         '<span>Applied ' + c.times_applied + 'x</span></div></div>';
     }
     el.innerHTML = html;
@@ -307,7 +307,7 @@ class WhetOverview extends WhetBase {
     for (var i = 0; i < items.length; i++) {
       var d = items[i];
       var gapPct = 100 - d.coverage_pct;
-      html += '<div class="flex items-center gap-3 py-2 border-b border-edge last:border-b-0">' +
+      html += '<div class="flex items-center gap-3 py-3 border-b border-edge last:border-b-0">' +
         '<div class="w-[120px] font-mono text-[13px] text-primary shrink-0">' + esc(d.domain) + '</div>' +
         '<div class="flex-1 h-2 bg-raised rounded overflow-hidden">' +
           '<div class="gap-bar-fill h-full bg-red rounded" style="width:' + gapPct + '%"></div>' +

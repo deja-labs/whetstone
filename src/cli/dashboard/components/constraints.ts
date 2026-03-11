@@ -42,8 +42,8 @@ class WhetConstraints extends WhetBase {
       '<input type="text" id="cf-search" class="wh-filter-input" placeholder="Search constraints..." oninput="debounceConstraintSearch()">' +
       '<button class="wh-filter-btn" onclick="clearConstraintFilters()">Clear</button>' +
     '</div>' +
-    '<div class="grid grid-cols-7 gap-3 mb-6 max-[900px]:grid-cols-4 max-sm:grid-cols-2" id="constraints-summary"></div>' +
-    '<div id="constraints-count" class="text-xs text-muted mb-3 font-mono tracking-wide"></div>' +
+    '<div class="grid grid-cols-7 gap-4 mb-8 max-[900px]:grid-cols-4 max-sm:grid-cols-2" id="constraints-summary"></div>' +
+    '<div id="constraints-count" class="text-xs text-muted mb-4 font-mono tracking-wide"></div>' +
     '<div id="constraints-list"></div>';
   }
 
@@ -152,13 +152,13 @@ class WhetConstraints extends WhetBase {
       } catch(e) {}
 
       html += '<div class="wh-card" onclick="openConstraint(\\'' + esc(c.id) + '\\')">';
-      html += '<div class="text-sm font-medium text-primary mb-1.5">' + esc(c.title) + '</div>';
-      html += '<div class="text-[13px] text-muted leading-normal line-clamp-2 mb-2">' + esc(c.rule) + '</div>';
-      html += '<div class="flex flex-wrap gap-1.5 items-center">';
+      html += '<div class="text-sm font-medium text-primary mb-2">' + esc(c.title) + '</div>';
+      html += '<div class="text-[13px] text-muted leading-normal line-clamp-2 mb-3">' + esc(c.rule) + '</div>';
+      html += '<div class="flex flex-wrap gap-2 items-center">';
       html += domainBadge(c.domain) + severityBadge(c.severity) + '<whet-badge text="' + esc(c.category) + '"></whet-badge>' + statusBadge;
       if (tagsHtml) html += tagsHtml;
       html += '</div>';
-      html += '<div class="mt-2 pt-2 border-t border-edge-subtle text-[11px] font-mono text-muted">';
+      html += '<div class="mt-3 pt-3 border-t border-edge-subtle text-[11px] font-mono text-muted">';
       html += appliedText + ' \\u00B7 ' + linkedCount + ' rejection' + (linkedCount !== 1 ? 's' : '') + ' \\u00B7 ' + timeAgo(c.created_at) + staleIndicator;
       html += '</div>';
       html += '</div>';

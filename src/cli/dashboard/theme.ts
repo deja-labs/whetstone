@@ -110,7 +110,7 @@ details[open] summary::before { transform: rotate(90deg); }
 /* ── Semantic @apply classes ── */
 
 .wh-card {
-  @apply bg-card border border-edge rounded-lg p-4 mb-2 cursor-pointer
+  @apply bg-card border border-edge rounded-lg p-5 mb-3 cursor-pointer
          transition-all duration-150 ease-out
          shadow-[0_1px_3px_rgba(0,0,0,0.2),0_1px_2px_rgba(0,0,0,0.12)];
 }
@@ -121,13 +121,13 @@ details[open] summary::before { transform: rotate(90deg); }
 .wh-card:active { @apply scale-[0.995]; }
 
 .wh-list-item {
-  @apply py-2.5 px-2 -mx-2 border-b border-edge-subtle text-sm rounded transition-colors;
+  @apply py-3.5 px-3 -mx-3 border-b border-edge-subtle text-sm rounded transition-colors;
 }
 .wh-list-item:hover { @apply bg-raised; }
 .wh-list-item:last-child { @apply border-b-0; }
 
 .wh-section {
-  @apply bg-card border border-edge rounded-lg p-5 mb-6 relative overflow-hidden;
+  @apply bg-card border border-edge rounded-lg p-6 mb-8 relative overflow-hidden;
 }
 .wh-section::before {
   content: '';
@@ -138,7 +138,7 @@ details[open] summary::before { transform: rotate(90deg); }
 }
 
 .wh-section h2 {
-  @apply text-xs font-bold uppercase tracking-widest text-muted mb-4 flex items-center gap-2;
+  @apply text-xs font-bold uppercase tracking-widest text-muted mb-5 flex items-center gap-2;
 }
 .wh-section h2::before {
   content: '';
@@ -150,13 +150,13 @@ details[open] summary::before { transform: rotate(90deg); }
 }
 
 .wh-empty {
-  @apply text-muted text-sm py-8 text-center border border-dashed border-edge-subtle rounded-lg;
+  @apply text-muted text-sm py-10 text-center border border-dashed border-edge-subtle rounded-lg;
 }
 
-.wh-modal-field { @apply mb-4 pb-4 border-b border-edge-subtle; }
+.wh-modal-field { @apply mb-5 pb-5 border-b border-edge-subtle; }
 .wh-modal-field:last-child { @apply mb-0 pb-0 border-b-0; }
 .wh-field-label {
-  @apply text-[11px] font-bold text-muted uppercase tracking-widest mb-1.5 font-mono;
+  @apply text-[11px] font-bold text-muted uppercase tracking-widest mb-2 font-mono;
 }
 .wh-field-value {
   @apply text-sm text-primary leading-relaxed whitespace-pre-wrap break-words;
@@ -178,7 +178,7 @@ details[open] summary::before { transform: rotate(90deg); }
 }
 
 .wh-show-more {
-  @apply block w-full bg-transparent border-none text-muted p-2.5 mt-3
+  @apply block w-full bg-transparent border-none text-muted p-3 mt-4
          text-xs cursor-pointer rounded-md transition-colors;
 }
 .wh-show-more:hover {
@@ -188,7 +188,7 @@ details[open] summary::before { transform: rotate(90deg); }
 /* ── Filter bar classes ── */
 
 .wh-filter-bar {
-  @apply flex gap-2 mb-5 flex-wrap items-center p-3 bg-raised/50 rounded-lg border border-edge-subtle;
+  @apply flex gap-2.5 mb-6 flex-wrap items-center p-3.5 bg-raised/50 rounded-lg border border-edge-subtle;
 }
 .wh-filter-select {
   @apply bg-surface text-primary border border-edge rounded-md py-1.5 px-2.5

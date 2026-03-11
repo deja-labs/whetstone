@@ -28,7 +28,7 @@ class WhetNav extends WhetBase {
     this.innerHTML = '';
 
     var header = document.createElement('header');
-    header.className = 'flex items-center justify-between mb-6 pb-4 border-b border-edge';
+    header.className = 'flex items-center justify-between mb-8 pb-5 border-b border-edge';
 
     // Logo
     var h1 = document.createElement('h1');
@@ -38,7 +38,7 @@ class WhetNav extends WhetBase {
 
     // Nav tabs
     var nav = document.createElement('nav');
-    nav.className = 'flex gap-1';
+    nav.className = 'flex gap-1.5';
     for (var i = 0; i < pages.length; i++) {
       (function(page) {
         var btn = document.createElement('button');
