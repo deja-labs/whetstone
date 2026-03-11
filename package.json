@@ -1,6 +1,6 @@
 {
   "name": "@frontier-collective/whetstone-mcp",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "An MCP server that captures and encodes human rejections of AI output into durable, queryable constraints.",
   "type": "module",
   "main": "dist/index.js",
