@@ -32,13 +32,13 @@ class WhetRejections extends WhetBase {
       '<input type="text" id="rf-search" class="wh-filter-input" placeholder="Search rejections..." oninput="debounceRejectionSearch()">' +
       '<button class="wh-filter-btn" onclick="clearRejectionFilters()">Clear</button>' +
     '</div>' +
-    '<div class="grid grid-cols-4 gap-4 mb-8 max-sm:grid-cols-2" id="rejections-summary"></div>' +
+    '<div class="wh-grid-stats mb-8" id="rejections-summary"></div>' +
     '<section class="wh-section" id="rej-patterns-section" style="display:none">' +
       '<h2>Patterns <span class="text-[11px] text-muted font-mono font-normal">\\u2014 recurring themes in unencoded rejections</span></h2>' +
       '<div id="rej-patterns-list"></div>' +
     '</section>' +
     '<div id="rejections-count" class="text-xs text-muted mb-4 font-mono tracking-wide"></div>' +
-    '<div id="rejections-list"></div>';
+    '<div id="rejections-list" class="wh-grid-cards"></div>';
   }
 
   _buildFilterParams() {
@@ -131,7 +131,7 @@ class WhetRejections extends WhetBase {
       html += '<div class="wh-card" onclick="openRejection(\\'' + esc(r.id) + '\\')">';
       html += '<div class="text-sm font-medium text-primary mb-2">' + esc(r.description) + '</div>';
       if (r.reasoning) html += '<div class="text-[13px] text-muted leading-normal line-clamp-2 mb-3">' + esc(r.reasoning) + '</div>';
-      html += '<div class="flex flex-wrap gap-2 items-center">';
+      html += '<div class="wh-flex-wrap">';
       html += domainBadge(r.domain) + ' ' + encodedHtml;
       html += '</div>';
       html += '<div class="mt-3 pt-3 border-t border-edge-subtle text-[11px] font-mono text-muted">' + timeAgo(r.created_at) + '</div>';

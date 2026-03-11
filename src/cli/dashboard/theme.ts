@@ -110,7 +110,7 @@ details[open] summary::before { transform: rotate(90deg); }
 /* ── Semantic @apply classes ── */
 
 .wh-card {
-  @apply bg-card border border-edge rounded-lg p-5 mb-3 cursor-pointer
+  @apply bg-card border border-edge rounded-lg p-5 cursor-pointer
          transition-all duration-150 ease-out
          shadow-[0_1px_3px_rgba(0,0,0,0.2),0_1px_2px_rgba(0,0,0,0.12)];
 }
@@ -183,6 +183,24 @@ details[open] summary::before { transform: rotate(90deg); }
 }
 .wh-show-more:hover {
   @apply text-accent bg-raised;
+}
+
+/* ── Layout grids ── */
+
+.wh-grid-stats {
+  @apply grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-6;
+}
+.wh-grid-cards {
+  @apply grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-6;
+}
+.wh-grid-panels {
+  @apply grid grid-cols-2 gap-8 mb-10 max-md:grid-cols-1;
+}
+.wh-flex-row {
+  @apply flex items-center gap-3;
+}
+.wh-flex-wrap {
+  @apply flex flex-wrap gap-3 items-center;
 }
 
 /* ── Filter bar classes ── */

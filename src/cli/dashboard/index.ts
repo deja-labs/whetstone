@@ -52,7 +52,7 @@ ${CUSTOM_CSS}
 ${COMPONENT_SCRIPT}
 </head>
 <body class="bg-surface text-primary font-sans min-h-screen flex flex-col">
-<main class="flex-1 px-8 py-8 max-w-[1600px] mx-auto w-full">
+<main class="flex-1 px-10 py-10 w-full">
 ${BODY}
 </main>
 ${footer}
@@ -196,7 +196,7 @@ async function openRejection(id) {
     html += '<h2 class="text-base font-semibold text-primary leading-snug">' + esc(r.description) + '</h2></div>';
     html += '<button class="bg-transparent border-none text-muted text-xl cursor-pointer ml-4 leading-none shrink-0 hover:text-primary w-8 h-8 rounded-md flex items-center justify-center hover:bg-raised transition-colors" onclick="closeModal()">\\u00D7</button></div>';
     html += '<div class="p-6">';
-    html += '<div class="flex gap-2 flex-wrap mb-5">' + domainBadge(r.domain) + '</div>';
+    html += '<div class="wh-flex-wrap mb-5">' + domainBadge(r.domain) + '</div>';
     html += modalField('Description', r.description);
     html += modalField('Reasoning', r.reasoning, { showEmpty: true });
     html += modalField('Raw Output', r.raw_output, { code: true, showEmpty: true });
@@ -229,7 +229,7 @@ async function openConstraint(id) {
     html += '<h2 class="text-base font-semibold text-primary leading-snug">' + esc(c.title) + '</h2></div>';
     html += '<button class="bg-transparent border-none text-muted text-xl cursor-pointer ml-4 leading-none shrink-0 hover:text-primary w-8 h-8 rounded-md flex items-center justify-center hover:bg-raised transition-colors" onclick="closeModal()">\\u00D7</button></div>';
     html += '<div class="p-6">';
-    html += '<div class="flex gap-2 flex-wrap mb-5">' + domainBadge(c.domain) + severityBadge(c.severity) + '<whet-badge text="' + esc(c.category) + '"></whet-badge><whet-badge text="' + esc(c.status) + '"></whet-badge></div>';
+    html += '<div class="wh-flex-wrap mb-5">' + domainBadge(c.domain) + severityBadge(c.severity) + '<whet-badge text="' + esc(c.category) + '"></whet-badge><whet-badge text="' + esc(c.status) + '"></whet-badge></div>';
     html += modalField('Rule', c.rule);
     html += modalField('Reasoning', c.reasoning, { showEmpty: true });
     html += modalField('Bad Example', c.rejected_example, { code: true, showEmpty: true });
@@ -238,7 +238,7 @@ async function openConstraint(id) {
     var tags = null;
     try { tags = c.tags ? JSON.parse(c.tags) : null; } catch(e) { tags = c.tags ? [c.tags] : null; }
     if (tags && tags.length > 0) {
-      var tagsHtml = '<div class="flex gap-2 flex-wrap">';
+      var tagsHtml = '<div class="wh-flex-wrap">';
       for (var t = 0; t < tags.length; t++) tagsHtml += '<span class="wh-tag">' + esc(tags[t]) + '</span>';
       tagsHtml += '</div>';
       html += '<div class="wh-modal-field"><div class="wh-field-label">Tags</div>' + tagsHtml + '</div>';
@@ -299,12 +299,12 @@ function renderConstraintDetail(c, extraMeta) {
     return '<details class="clickable py-4 border-b border-edge text-sm" onclick="if(!event.target.closest(\\'summary\\')){return}event.preventDefault();openConstraint(\\'' + esc(c.id) + '\\')">' +
       '<summary class="cursor-pointer flex items-start gap-2"><div>' +
       '<div class="title text-primary font-medium">' + esc(c.title) + '</div>' +
-      '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-2">' + domainBadge(c.domain) + severityBadge(c.severity) + (extraMeta || '') + '</div>' +
+      '<div class="meta wh-flex-wrap text-xs text-muted mt-2">' + domainBadge(c.domain) + severityBadge(c.severity) + (extraMeta || '') + '</div>' +
       '</div></summary>' +
       '</details>';
   }
   return '<div class="wh-list-item clickable" onclick="openConstraint(\\'' + esc(c.id) + '\\')">' +
     '<div class="title text-primary font-medium">' + esc(c.title) + '</div>' +
-    '<div class="meta flex gap-2 items-center flex-wrap text-xs text-muted mt-2">' + domainBadge(c.domain) + severityBadge(c.severity) + (extraMeta || '') + '</div></div>';
+    '<div class="meta wh-flex-wrap text-xs text-muted mt-2">' + domainBadge(c.domain) + severityBadge(c.severity) + (extraMeta || '') + '</div></div>';
 }
 `;

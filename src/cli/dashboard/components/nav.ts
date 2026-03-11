@@ -38,7 +38,7 @@ class WhetNav extends WhetBase {
 
     // Nav tabs
     var nav = document.createElement('nav');
-    nav.className = 'flex gap-2';
+    nav.className = 'flex gap-3';
     for (var i = 0; i < pages.length; i++) {
       (function(page) {
         var btn = document.createElement('button');
