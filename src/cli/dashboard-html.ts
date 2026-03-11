@@ -837,19 +837,10 @@ footer a:hover { text-decoration: underline; }
 // ── Body ──────────────────────────────────────────────────────────────
 
 const BODY = `
-<header>
-  <h1>Whetstone <span>Dashboard</span></h1>
-  <nav class="nav-tabs">
-    <button class="nav-tab active" onclick="switchPage('overview')">Overview</button>
-    <button class="nav-tab" onclick="switchPage('rejections')">Rejections</button>
-    <button class="nav-tab" onclick="switchPage('constraints')">Constraints</button>
-  </nav>
-  <div class="header-controls">
-    <span id="status">Loading...</span>
-    <button onclick="refresh()">Refresh</button>
-    <button id="auto-btn" class="active" onclick="toggleAuto()">Auto: ON</button>
-  </div>
-</header>
+<whet-app></whet-app>
+
+<template id="app-template">
+<whet-nav current-page="overview" status="Loading..." auto-refresh></whet-nav>
 
 <div id="page-overview" class="page">
 
@@ -971,14 +962,12 @@ const BODY = `
 <div id="modal-overlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modal-content"></div>
 </div>
+</template>
 `;
 
 // ── Script ────────────────────────────────────────────────────────────
 
 const SCRIPT = `
-var autoRefresh = true;
-var refreshTimer = null;
-
 function esc(s) {
   if (!s) return '';
   var d = document.createElement('div');
@@ -1499,23 +1488,6 @@ function renderElevation(s) {
 
 // ── Page switching ──
 
-var currentPage = 'overview';
-
-function switchPage(page) {
-  currentPage = page;
-  document.getElementById('page-overview').style.display = page === 'overview' ? '' : 'none';
-  document.getElementById('page-rejections').style.display = page === 'rejections' ? '' : 'none';
-  document.getElementById('page-constraints').style.display = page === 'constraints' ? '' : 'none';
-  var tabs = document.querySelectorAll('.nav-tab');
-  for (var i = 0; i < tabs.length; i++) {
-    var tabName = tabs[i].textContent.toLowerCase().trim();
-    tabs[i].classList.toggle('active', tabName === page);
-  }
-  window.location.hash = page === 'overview' ? '' : page;
-  if (page === 'constraints') loadConstraintsPage();
-  if (page === 'rejections') loadRejectionsPage();
-}
-
 // ── Constraints page ──
 
 var constraintSearchTimer = null;
@@ -1778,66 +1750,5 @@ async function loadRejectionsPage() {
 
 // ── Refresh ──
 
-async function refresh() {
-  var statusEl = document.getElementById('status');
-  statusEl.textContent = 'Refreshing...';
-  try {
-    if (currentPage === 'overview') {
-      var results = await Promise.all([
-        fetchJson('/api/stats'),
-        fetchJson('/api/list?status=unencoded&limit=30'),
-        fetchJson('/api/patterns')
-      ]);
-      var stats = results[0];
-      var listResult = results[1];
-      var patternsData = results[2];
-      renderStatsCards(stats);
-      renderDomainBars(stats);
-      renderMostApplied(stats);
-      renderPatterns(patternsData);
-      renderUnencoded(listResult);
-      renderRecentlyEncoded(stats);
-      renderDomainGaps(stats);
-      renderGraduation(stats);
-      renderDead(stats);
-      renderElevation(stats);
-    } else if (currentPage === 'rejections') {
-      await loadRejectionsPage();
-    } else if (currentPage === 'constraints') {
-      await loadConstraintsPage();
-    }
-    statusEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
-  } catch (err) {
-    statusEl.textContent = 'Error: ' + err.message;
-  }
-}
-
-function toggleAuto() {
-  autoRefresh = !autoRefresh;
-  var btn = document.getElementById('auto-btn');
-  if (autoRefresh) {
-    btn.textContent = 'Auto: ON';
-    btn.classList.add('active');
-    startAutoRefresh();
-  } else {
-    btn.textContent = 'Auto: OFF';
-    btn.classList.remove('active');
-    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
-  }
-}
-
-function startAutoRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(refresh, 10000);
-}
-
-// Hash routing
-if (window.location.hash === '#constraints') {
-  switchPage('constraints');
-} else if (window.location.hash === '#rejections') {
-  switchPage('rejections');
-} else {
-  refresh();
-}
-startAutoRefresh();
 `;
+
