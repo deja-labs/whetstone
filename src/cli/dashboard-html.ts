@@ -19,6 +19,7 @@ const STYLES = `
   --accent-yellow: #d29922;
   --accent-red: #f85149;
   --accent-purple: #bc8cff;
+  --accent-orange: #f0883e;
   --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
@@ -91,7 +92,7 @@ button.active { border-color: var(--accent); color: var(--accent); }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -169,22 +170,48 @@ button.active { border-color: var(--accent); color: var(--accent); }
   background: var(--bg-secondary);
   border-radius: 4px;
   overflow: hidden;
+  display: flex;
 }
 
-.bar-fill {
+.bar-fill-encoded {
+  height: 100%;
+  background: var(--accent-green);
+  transition: width 0.4s ease;
+}
+
+.bar-fill-unencoded {
   height: 100%;
   background: var(--accent);
-  border-radius: 4px;
   transition: width 0.4s ease;
-  min-width: 2px;
 }
 
 .bar-count {
-  width: 40px;
+  width: 60px;
   font-size: 13px;
   font-family: var(--font-mono);
   color: var(--text-secondary);
 }
+
+.bar-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.bar-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.bar-legend .legend-encoded::before { background: var(--accent-green); }
+.bar-legend .legend-unencoded::before { background: var(--accent); }
 
 .list-item {
   padding: 10px 0;
@@ -204,7 +231,9 @@ button.active { border-color: var(--accent); color: var(--accent); }
   color: var(--text-secondary);
   margin-top: 4px;
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .badge {
@@ -258,6 +287,21 @@ details .detail-body {
   line-height: 1.5;
 }
 
+.detail-body .detail-field {
+  margin-bottom: 8px;
+}
+
+.detail-body .detail-field:last-child { margin-bottom: 0; }
+
+.detail-body .detail-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
 .empty {
   color: var(--text-secondary);
   font-size: 14px;
@@ -272,6 +316,25 @@ details .detail-body {
   font-family: var(--font-mono);
   color: var(--accent);
   margin-left: 4px;
+}
+
+.show-more-btn {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--text-secondary);
+  padding: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.show-more-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: none;
 }
 
 footer {
@@ -291,9 +354,13 @@ footer a {
 
 footer a:hover { text-decoration: underline; }
 
-@media (max-width: 768px) {
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
   .two-col { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 `;
 
@@ -322,14 +389,20 @@ const BODY = `
   </div>
 </section>
 
-<div class="card">
-  <h2>Unencoded Rejections</h2>
-  <div id="unencoded-list"></div>
-</div>
+<section class="two-col">
+  <div class="card">
+    <h2>Unencoded Rejections</h2>
+    <div id="unencoded-list"></div>
+  </div>
+  <div class="card">
+    <h2>Recently Encoded</h2>
+    <div id="recently-encoded-list"></div>
+  </div>
+</section>
 
 <section class="two-col">
   <div class="card">
-    <h2>Stale Constraints</h2>
+    <h2>Stale Constraints <span class="count-badge">&gt; 7 days, 0 applications</span></h2>
     <div id="stale-list"></div>
   </div>
   <div class="card">
@@ -379,11 +452,15 @@ async function fetchJson(path) {
 function renderStatsCards(s) {
   var el = document.getElementById('stats-cards');
   var unencodedClass = s.unencoded_rejections > 0 ? ' warn' : '';
+  var encoded = s.total_rejections - s.unencoded_rejections;
+  var coveragePct = s.total_rejections > 0 ? Math.round((encoded / s.total_rejections) * 100) : 0;
+  var coverageClass = coveragePct >= 80 ? ' good' : coveragePct >= 50 ? '' : ' warn';
   el.innerHTML =
     '<div class="stat-card"><div class="value">' + s.total_rejections + '</div><div class="label">Rejections</div></div>' +
     '<div class="stat-card"><div class="value">' + s.total_constraints + '</div><div class="label">Constraints</div></div>' +
     '<div class="stat-card good"><div class="value">' + s.active_constraints + '</div><div class="label">Active</div></div>' +
-    '<div class="stat-card' + unencodedClass + '"><div class="value">' + s.unencoded_rejections + '</div><div class="label">Unencoded</div></div>';
+    '<div class="stat-card' + unencodedClass + '"><div class="value">' + s.unencoded_rejections + '</div><div class="label">Unencoded</div></div>' +
+    '<div class="stat-card' + coverageClass + '"><div class="value">' + coveragePct + '%</div><div class="label">Coverage</div></div>';
 }
 
 function renderDomainBars(s) {
@@ -393,15 +470,27 @@ function renderDomainBars(s) {
     el.innerHTML = '<div class="empty">No rejections yet</div>';
     return;
   }
+  // Build encoded lookup
+  var encodedMap = {};
+  var enc = s.encoded_by_domain || [];
+  for (var j = 0; j < enc.length; j++) {
+    encodedMap[enc[j].domain] = enc[j].count;
+  }
   var max = Math.max.apply(null, domains.map(function(d) { return d.count; }));
-  var html = '';
+  var html = '<div class="bar-legend"><span class="legend-encoded">Encoded</span><span class="legend-unencoded">Unencoded</span></div>';
   for (var i = 0; i < domains.length; i++) {
     var d = domains[i];
-    var pct = max > 0 ? Math.round((d.count / max) * 100) : 0;
+    var encodedCount = encodedMap[d.domain] || 0;
+    var unencodedCount = d.count - encodedCount;
+    var encodedPct = max > 0 ? Math.round((encodedCount / max) * 100) : 0;
+    var unencodedPct = max > 0 ? Math.round((unencodedCount / max) * 100) : 0;
     html += '<div class="bar-row">' +
       '<div class="bar-label">' + esc(d.domain) + '</div>' +
-      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
-      '<div class="bar-count">' + d.count + '</div>' +
+      '<div class="bar-track">' +
+        '<div class="bar-fill-encoded" style="width:' + encodedPct + '%"></div>' +
+        '<div class="bar-fill-unencoded" style="width:' + unencodedPct + '%"></div>' +
+      '</div>' +
+      '<div class="bar-count">' + encodedCount + '/' + d.count + '</div>' +
       '</div>';
   }
   el.innerHTML = html;
@@ -414,15 +503,64 @@ function renderMostApplied(s) {
     el.innerHTML = '<div class="empty">No constraints applied yet</div>';
     return;
   }
+  var limit = 8;
+  var showAll = items.length <= limit;
+  var visible = showAll ? items : items.slice(0, limit);
   var html = '';
-  for (var i = 0; i < items.length; i++) {
-    var c = items[i];
-    html += '<div class="list-item">' +
-      '<div class="title">' + esc(c.title) + '</div>' +
-      '<div class="meta">' + domainBadge(c.domain) +
-      '<span>Applied ' + c.times_applied + 'x</span></div></div>';
+  for (var i = 0; i < visible.length; i++) {
+    var c = visible[i];
+    html += renderConstraintDetail(c, '<span>Applied ' + c.times_applied + 'x</span>');
+  }
+  if (!showAll) {
+    html += '<button class="show-more-btn" onclick="toggleAppliedList(this)" data-expanded="false">Show ' + (items.length - limit) + ' more</button>';
   }
   el.innerHTML = html;
+  // Store full data for expand
+  el._fullItems = items;
+  el._limit = limit;
+}
+
+function toggleAppliedList(btn) {
+  var el = document.getElementById('applied-list');
+  var items = el._fullItems;
+  var limit = el._limit;
+  var expanded = btn.getAttribute('data-expanded') === 'true';
+  var visible = expanded ? items.slice(0, limit) : items;
+  var html = '';
+  for (var i = 0; i < visible.length; i++) {
+    var c = visible[i];
+    html += renderConstraintDetail(c, '<span>Applied ' + c.times_applied + 'x</span>');
+  }
+  if (expanded) {
+    html += '<button class="show-more-btn" onclick="toggleAppliedList(this)" data-expanded="false">Show ' + (items.length - limit) + ' more</button>';
+  } else {
+    html += '<button class="show-more-btn" onclick="toggleAppliedList(this)" data-expanded="true">Show less</button>';
+  }
+  el.innerHTML = html;
+  el._fullItems = items;
+  el._limit = limit;
+}
+
+function renderConstraintDetail(c, extraMeta) {
+  var body = '';
+  if (c.rule) body += '<div class="detail-field"><div class="detail-label">Rule</div><div>' + esc(c.rule) + '</div></div>';
+  if (c.reasoning) body += '<div class="detail-field"><div class="detail-label">Reasoning</div><div>' + esc(c.reasoning) + '</div></div>';
+  if (c.rejected_example) body += '<div class="detail-field"><div class="detail-label">Bad Example</div><div>' + esc(c.rejected_example) + '</div></div>';
+  if (c.accepted_example) body += '<div class="detail-field"><div class="detail-label">Good Example</div><div>' + esc(c.accepted_example) + '</div></div>';
+  body += '<div class="detail-field" style="font-family:var(--font-mono);font-size:11px">ID: ' + esc(c.id) + '</div>';
+  var hasBody = c.rule || c.reasoning || c.rejected_example || c.accepted_example;
+  if (hasBody) {
+    return '<details>' +
+      '<summary><div>' +
+      '<div class="title">' + esc(c.title) + '</div>' +
+      '<div class="meta">' + domainBadge(c.domain) + severityBadge(c.severity) + (extraMeta || '') + '</div>' +
+      '</div></summary>' +
+      '<div class="detail-body">' + body + '</div>' +
+      '</details>';
+  }
+  return '<div class="list-item">' +
+    '<div class="title">' + esc(c.title) + '</div>' +
+    '<div class="meta">' + domainBadge(c.domain) + severityBadge(c.severity) + (extraMeta || '') + '</div></div>';
 }
 
 function renderUnencoded(listResult) {
@@ -432,13 +570,15 @@ function renderUnencoded(listResult) {
     el.innerHTML = '<div class="empty">All rejections are encoded \\u2014 nice work</div>';
     return;
   }
+  var limit = 10;
+  var visible = items.slice(0, limit);
   var html = '';
-  for (var i = 0; i < items.length; i++) {
-    var r = items[i];
+  for (var i = 0; i < visible.length; i++) {
+    var r = visible[i];
     var body = '';
-    if (r.reasoning) body += '<div><strong>Why:</strong> ' + esc(r.reasoning) + '</div>';
-    if (r.raw_output) body += '<div style="margin-top:8px"><strong>Output:</strong> ' + esc(r.raw_output.substring(0, 300)) + (r.raw_output.length > 300 ? '...' : '') + '</div>';
-    body += '<div style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--text-secondary)">ID: ' + esc(r.id) + '</div>';
+    if (r.reasoning) body += '<div class="detail-field"><div class="detail-label">Why</div><div>' + esc(r.reasoning) + '</div></div>';
+    if (r.raw_output) body += '<div class="detail-field"><div class="detail-label">Output</div><div>' + esc(r.raw_output.substring(0, 300)) + (r.raw_output.length > 300 ? '...' : '') + '</div></div>';
+    body += '<div class="detail-field" style="font-family:var(--font-mono);font-size:11px">ID: ' + esc(r.id) + '</div>';
     html += '<details>' +
       '<summary><div>' +
       '<div class="title">' + esc(r.description) + '</div>' +
@@ -447,8 +587,62 @@ function renderUnencoded(listResult) {
       '<div class="detail-body">' + body + '</div>' +
       '</details>';
   }
-  if (listResult.total > items.length) {
-    html += '<div class="empty">' + (listResult.total - items.length) + ' more not shown</div>';
+  if (listResult.total > limit) {
+    var remaining = listResult.total - limit;
+    html += '<button class="show-more-btn" onclick="toggleUnencodedList(this)" data-expanded="false">' + remaining + ' more unencoded rejections</button>';
+  }
+  el.innerHTML = html;
+  el._allItems = items;
+  el._total = listResult.total;
+}
+
+function toggleUnencodedList(btn) {
+  var el = document.getElementById('unencoded-list');
+  var items = el._allItems;
+  var expanded = btn.getAttribute('data-expanded') === 'true';
+  var visible = expanded ? items.slice(0, 10) : items;
+  var html = '';
+  for (var i = 0; i < visible.length; i++) {
+    var r = visible[i];
+    var body = '';
+    if (r.reasoning) body += '<div class="detail-field"><div class="detail-label">Why</div><div>' + esc(r.reasoning) + '</div></div>';
+    if (r.raw_output) body += '<div class="detail-field"><div class="detail-label">Output</div><div>' + esc(r.raw_output.substring(0, 300)) + (r.raw_output.length > 300 ? '...' : '') + '</div></div>';
+    body += '<div class="detail-field" style="font-family:var(--font-mono);font-size:11px">ID: ' + esc(r.id) + '</div>';
+    html += '<details>' +
+      '<summary><div>' +
+      '<div class="title">' + esc(r.description) + '</div>' +
+      '<div class="meta">' + domainBadge(r.domain) + '<span>' + timeAgo(r.created_at) + '</span></div>' +
+      '</div></summary>' +
+      '<div class="detail-body">' + body + '</div>' +
+      '</details>';
+  }
+  var remaining = el._total - (expanded ? 10 : items.length);
+  if (expanded) {
+    html += '<button class="show-more-btn" onclick="toggleUnencodedList(this)" data-expanded="false">' + (el._total - 10) + ' more unencoded rejections</button>';
+  } else if (remaining > 0) {
+    html += '<div class="empty">' + remaining + ' more not loaded</div>';
+  }
+  if (!expanded && items.length >= el._total) {
+    html += '<button class="show-more-btn" onclick="toggleUnencodedList(this)" data-expanded="true">Show less</button>';
+  }
+  el.innerHTML = html;
+  el._allItems = items;
+}
+
+function renderRecentlyEncoded(s) {
+  var el = document.getElementById('recently-encoded-list');
+  var items = s.recently_encoded || [];
+  if (items.length === 0) {
+    el.innerHTML = '<div class="empty">No encoded rejections yet</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var r = items[i];
+    html += '<div class="list-item">' +
+      '<div class="title">' + esc(r.description) + '</div>' +
+      '<div class="meta">' + domainBadge(r.domain) +
+      '<span>' + timeAgo(r.created_at) + '</span></div></div>';
   }
   el.innerHTML = html;
 }
@@ -463,10 +657,7 @@ function renderStale(s) {
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var c = items[i];
-    html += '<div class="list-item">' +
-      '<div class="title">' + esc(c.title) + '</div>' +
-      '<div class="meta">' + domainBadge(c.domain) + severityBadge(c.severity) +
-      '<span>' + timeAgo(c.created_at) + '</span></div></div>';
+    html += renderConstraintDetail(c, '<span>' + timeAgo(c.created_at) + '</span>');
   }
   el.innerHTML = html;
 }
@@ -481,10 +672,7 @@ function renderElevation(s) {
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var c = items[i];
-    html += '<div class="list-item">' +
-      '<div class="title">' + esc(c.title) + '</div>' +
-      '<div class="meta">' + domainBadge(c.domain) + severityBadge(c.severity) +
-      '<span>Applied ' + c.times_applied + 'x</span></div></div>';
+    html += renderConstraintDetail(c, '<span>Applied ' + c.times_applied + 'x</span>');
   }
   el.innerHTML = html;
 }
@@ -503,6 +691,7 @@ async function refresh() {
     renderDomainBars(stats);
     renderMostApplied(stats);
     renderUnencoded(listResult);
+    renderRecentlyEncoded(stats);
     renderStale(stats);
     renderElevation(stats);
     statusEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
