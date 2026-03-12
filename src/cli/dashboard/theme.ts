@@ -205,7 +205,7 @@ body {
 /* ── Badge ── */
 
 .wh-badge {
-  @apply inline-block text-[11px] font-mono font-medium px-2 py-px rounded-md
+  @apply inline-block text-[11px] font-mono font-medium px-2.5 py-1 rounded-md
          border border-edge text-muted bg-raised;
 }
 .wh-badge-critical { @apply border-red/30 text-red bg-glow-red; }
@@ -292,6 +292,12 @@ body {
 }
 .wh-field-editable:hover {
   @apply border-edge-hover bg-raised/50;
+}
+.wh-field-editable:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 20%, transparent);
 }
 .wh-field-saved {
   @apply bg-green/10;

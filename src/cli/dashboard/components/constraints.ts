@@ -199,7 +199,7 @@ class WhetConstraints extends WhetBase {
       var c = constraints[i];
       var statusBadge = c.status !== 'active' ? '<span class="wh-badge">' + esc(c.status) + '</span>' : '';
       var linkedCount = c.linked_rejection_count || 0;
-      var appliedText = c.times_applied > 0 ? 'Applied ' + c.times_applied + 'x' : 'Never applied';
+      var appliedText = c.times_applied > 0 ? '<span class="text-green">Applied ' + c.times_applied + 'x</span>' : 'Never applied';
       var staleIndicator = '';
       if (c.status === 'active' && c.times_applied === 0) {
         var ageMs = Date.now() - new Date(c.created_at).getTime();

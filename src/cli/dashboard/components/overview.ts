@@ -161,7 +161,7 @@ class WhetOverview extends WhetBase {
     var html = '';
     for (var i = 0; i < visible.length; i++) {
       var c = visible[i];
-      html += renderConstraintDetail(c, '<span>Applied ' + c.times_applied + 'x</span>');
+      html += renderConstraintDetail(c, '<span class="text-green">Applied ' + c.times_applied + 'x</span>');
     }
     if (!showAll) {
       html += '<button class="wh-show-more" onclick="toggleAppliedList(this)" data-expanded="false">Show ' + (items.length - limit) + ' more</button>';
@@ -180,7 +180,7 @@ class WhetOverview extends WhetBase {
     var html = '';
     for (var i = 0; i < visible.length; i++) {
       var c = visible[i];
-      html += renderConstraintDetail(c, '<span>Applied ' + c.times_applied + 'x</span>');
+      html += renderConstraintDetail(c, '<span class="text-green">Applied ' + c.times_applied + 'x</span>');
     }
     if (expanded) {
       html += '<button class="wh-show-more" onclick="toggleAppliedList(this)" data-expanded="false">Show ' + (items.length - limit) + ' more</button>';
@@ -334,7 +334,7 @@ class WhetOverview extends WhetBase {
         '<div class="title text-primary font-medium">' + esc(c.title) + '</div>' +
         '<div class="text-[13px] text-muted mt-2 pl-2 border-l-2 border-l-green leading-snug">' + esc(c.rule) + '</div>' +
         '<div class="meta wh-flex-wrap text-xs text-muted mt-2">' + domainBadge(c.domain) + severityBadge(c.severity) +
-        '<span>Applied ' + c.times_applied + 'x</span></div></div>';
+        '<span class="text-green">Applied ' + c.times_applied + 'x</span></div></div>';
     }
     el.innerHTML = html;
     this._updateGapsGraduationWrapper();
@@ -413,7 +413,7 @@ class WhetOverview extends WhetBase {
     var html = '';
     for (var i = 0; i < items.length; i++) {
       var c = items[i];
-      html += renderConstraintDetail(c, '<span>Applied ' + c.times_applied + 'x \\u00B7 last ' + timeAgo(c.last_applied_at) + '</span>');
+      html += renderConstraintDetail(c, '<span class="text-green">Applied ' + c.times_applied + 'x \\u00B7 last ' + timeAgo(c.last_applied_at) + '</span>');
     }
     el.innerHTML = html;
     this._updateDeadElevationWrapper();
@@ -429,7 +429,7 @@ class WhetOverview extends WhetBase {
     var html = '';
     for (var i = 0; i < items.length; i++) {
       var c = items[i];
-      html += renderConstraintDetail(c, '<span>Applied ' + c.times_applied + 'x</span>');
+      html += renderConstraintDetail(c, '<span class="text-green">Applied ' + c.times_applied + 'x</span>');
     }
     el.innerHTML = html;
   }

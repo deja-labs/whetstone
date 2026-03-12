@@ -266,7 +266,7 @@ function editableField(entityId, fieldName, label, value, opts) {
   var codeAttr = opts.code ? ' data-code="true"' : '';
   return '<div class="wh-modal-field">' +
     '<div class="wh-field-label">' + esc(label) + '</div>' +
-    '<div class="wh-field-value wh-field-editable" data-field="' + fieldName + '" data-id="' + entityId + '" data-entity="' + entity + '" data-tag="' + tag + '"' + codeAttr + ' data-value="' + dataVal + '" onclick="startEdit(this)">' +
+    '<div class="wh-field-value wh-field-editable" tabindex="0" data-field="' + fieldName + '" data-id="' + entityId + '" data-entity="' + entity + '" data-tag="' + tag + '"' + codeAttr + ' data-value="' + dataVal + '" onclick="startEdit(this)">' +
     displayVal + '</div></div>';
 }
 
@@ -297,7 +297,7 @@ function startEdit(el) {
   if (tag !== 'textarea') input.select();
   input.addEventListener('blur', function() { saveField(el, id, field, input.value); });
   input.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { e.preventDefault(); renderFieldValue(el, value); }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); renderFieldValue(el, value); }
     if (e.key === 'Enter' && tag !== 'textarea') { e.preventDefault(); input.blur(); }
   });
 }
@@ -324,6 +324,19 @@ function startSelectEdit(el, entityId, field, currentValue, options) {
     itemSelectText: '',
   });
   el._choices = choices;
+
+  // Escape: close dropdown and restore value without closing the modal
+  el.addEventListener('keydown', function _escTrap(e) {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      el.removeEventListener('keydown', _escTrap);
+      if (el._choices) {
+        el._choices.destroy();
+        el._choices = null;
+      }
+      renderFieldValue(el, currentValue);
+    }
+  });
 
   select.addEventListener('change', function() {
     var newVal = select.value;
@@ -397,6 +410,19 @@ async function startDomainEdit(el, entityId, currentValue) {
     duplicateItemsAllowed: false,
   });
   el._choices = choices;
+
+  // Escape: close dropdown and restore value without closing the modal
+  el.addEventListener('keydown', function _escTrap(e) {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      el.removeEventListener('keydown', _escTrap);
+      if (el._choices) {
+        el._choices.destroy();
+        el._choices = null;
+      }
+      renderFieldValue(el, currentValue);
+    }
+  });
 
   // Dynamically add the typed value as a selectable choice so clicking works.
   // On each keystroke, rebuild the full choice list = base domains + optional custom entry.
@@ -507,12 +533,17 @@ function startTagsEdit(el, entityId, currentValue) {
       addTag(textInput.value);
       textInput.value = '';
       textInput.placeholder = '';
+    } else if (e.key === 'Tab' && !textInput.value.trim()) {
+      // Empty input: save tags and let focus advance to next field
+      e.preventDefault();
+      saveTags();
     }
     if (e.key === 'Backspace' && textInput.value === '' && tags.length > 0) {
       removeTag(tags.length - 1);
     }
     if (e.key === 'Escape') {
       e.preventDefault();
+      e.stopPropagation();
       cleanup();
       renderFieldValue(el, currentValue);
     }
@@ -583,6 +614,10 @@ function renderFieldValue(el, value) {
   } else {
     el.textContent = value;
   }
+  // Return focus to the field container for continued keyboard navigation
+  if (el.classList.contains('wh-field-editable') && el.hasAttribute('tabindex')) {
+    requestAnimationFrame(function() { el.focus(); });
+  }
 }
 
 async function saveField(el, id, field, newValue) {
@@ -621,6 +656,44 @@ function closeModal() {
 
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
+});
+
+// Keyboard activation: Enter/Space on a focused editable field triggers edit mode.
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    var el = document.activeElement;
+    if (el && el.classList && el.classList.contains('wh-field-editable')) {
+      e.preventDefault();
+      startEdit(el);
+    }
+  }
+});
+
+// Focus trap: keep Tab cycling within the modal when it's open.
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Tab') return;
+  var overlay = document.getElementById('modal-overlay');
+  if (!overlay || overlay.style.display === 'none') return;
+  var content = document.getElementById('modal-content');
+  if (!content) return;
+  var focusable = content.querySelectorAll('[tabindex], button, a[href], input, textarea, select, [contenteditable]');
+  var items = [];
+  for (var i = 0; i < focusable.length; i++) {
+    if (focusable[i].offsetParent !== null && !focusable[i].disabled) items.push(focusable[i]);
+  }
+  if (items.length === 0) return;
+  var first = items[0];
+  var last = items[items.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  } else if (!content.contains(document.activeElement)) {
+    e.preventDefault();
+    first.focus();
+  }
 });
 
 // Global delegated click handler for domain badge drilldowns.
@@ -806,6 +879,10 @@ async function openRejection(id) {
     }
     html += '</div>';
     content.innerHTML = html;
+    requestAnimationFrame(function() {
+      var first = content.querySelector('.wh-field-editable[tabindex]');
+      if (first) first.focus();
+    });
   } catch(err) {
     content.innerHTML = '<div class="p-6"><div class="wh-empty">Error: ' + esc(err.message) + '</div></div>';
   }
@@ -877,6 +954,10 @@ async function openConstraint(id) {
     }
     html += '</div>';
     content.innerHTML = html;
+    requestAnimationFrame(function() {
+      var first = content.querySelector('.wh-field-editable[tabindex]');
+      if (first) first.focus();
+    });
   } catch(err) {
     content.innerHTML = '<div class="p-6"><div class="wh-empty">Error: ' + esc(err.message) + '</div></div>';
   }
