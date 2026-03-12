@@ -1,6 +1,4 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "http";
-import { exec } from "child_process";
-import { platform } from "os";
 import { resolve, dirname } from "path";
 import { watch, type FSWatcher } from "fs";
 import { WebSocketServer, WebSocket } from "ws";
@@ -41,13 +39,6 @@ function readBody(req: IncomingMessage): Promise<string> {
 function sendHtml(res: ServerResponse, html: string): void {
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
   res.end(html);
-}
-
-function openBrowser(url: string): void {
-  const cmd = platform() === "darwin" ? "open"
-    : platform() === "win32" ? "start"
-    : "xdg-open";
-  exec(`${cmd} ${url}`);
 }
 
 export async function runDashboard(args: string[]): Promise<void> {
@@ -344,9 +335,16 @@ export async function runDashboard(args: string[]): Promise<void> {
 
   server.listen(port, () => {
     const url = `http://localhost:${port}`;
-    console.error(`\n  whetstone dashboard running at ${url}`);
-    console.error("  Press Ctrl+C to stop.\n");
-    openBrowser(url);
+    const dbDisplay = process.env.WHETSTONE_DB || ".whetstone/whetstone.db";
+    console.error("");
+    console.error("  \x1b[1m\x1b[33m⬡ Whetstone Dashboard\x1b[0m");
+    console.error("");
+    console.error(`  \x1b[2mURL:\x1b[0m      \x1b[36m${url}\x1b[0m`);
+    console.error(`  \x1b[2mDB:\x1b[0m       ${dbDisplay}`);
+    console.error(`  \x1b[2mPort:\x1b[0m     ${port}`);
+    console.error("");
+    console.error("  \x1b[2mPress Ctrl+C to stop.\x1b[0m");
+    console.error("");
   });
 
   process.on("SIGINT", () => {
