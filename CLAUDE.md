@@ -350,3 +350,30 @@ Tests should cover:
 - Error messages should be human-readable (these surface in agent conversations)
 - No over-engineering — this is a focused tool, not a framework
 - Do not add Co-Authored-By lines to commit messages
+
+## Commit Messages
+
+Follow Conventional Commits with WHET story code prefixes.
+
+**Format:**
+
+```
+[WHET-NNNN] type: short description    # when related to a story
+type: short description                 # when not related to a story
+```
+
+**Types:** `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `style`, `ci`, `perf`
+
+**Multi-line commits** (when a commit touches multiple concerns):
+
+```
+[WHET-0007] feat: add AI-generated changelog
+chore: add .env.example for API key config
+```
+
+**Rules:**
+- First line under 70 characters
+- Use imperative mood ("add", not "added" or "adds")
+- WHET code goes first when applicable — only if there's a clear match
+- One type prefix per line
+- No trailing periods
