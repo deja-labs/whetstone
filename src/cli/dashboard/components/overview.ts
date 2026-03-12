@@ -68,11 +68,11 @@ class WhetOverview extends WhetBase {
     var wd = s.week_delta || {};
     var domainCount = (s.rejections_by_domain || []).length;
     el.innerHTML =
-      renderStat(s.total_rejections, 'Rejections', { delta: deltaText(wd.rejections, 'this week') }) +
-      renderStat(s.total_constraints, 'Constraints', { delta: deltaText(wd.constraints, 'this week') }) +
-      renderStat(s.active_constraints, 'Active', { good: true }) +
-      renderStat(s.unencoded_rejections, 'Unencoded', { warn: s.unencoded_rejections > 0 }) +
-      renderStat(coveragePct + '%', 'Coverage', { good: coveragePct >= 80, warn: coveragePct < 50, delta: deltaText(wd.encoded, 'encoded this week') }) +
+      renderStat(s.total_rejections, 'Rejections', { delta: deltaText(wd.rejections, 'this week'), href: { page: 'rejections' } }) +
+      renderStat(s.total_constraints, 'Constraints', { delta: deltaText(wd.constraints, 'this week'), href: { page: 'constraints' } }) +
+      renderStat(s.active_constraints, 'Active', { good: true, href: { page: 'constraints', filters: { status: 'active' } } }) +
+      renderStat(s.unencoded_rejections, 'Unencoded', { warn: s.unencoded_rejections > 0, href: { page: 'rejections', filters: { encoded: 'no' } } }) +
+      renderStat(coveragePct + '%', 'Coverage', { good: coveragePct >= 80, warn: coveragePct < 50, delta: deltaText(wd.encoded, 'encoded this week'), href: { page: 'constraints', filters: { status: 'active' } } }) +
       renderStat(domainCount, 'Domains');
   }
 

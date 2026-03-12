@@ -122,11 +122,21 @@ class WhetRejections extends WhetBase {
 
   _renderSummary(summary) {
     var el = document.getElementById('rejections-summary');
+    var curEncoded = document.getElementById('rf-encoded').value;
+
     el.innerHTML =
-      renderStat(summary.total || 0, 'Total') +
-      renderStat(summary.unencoded || 0, 'Unencoded', { color: 'var(--color-yellow)' }) +
-      renderStat(summary.encoded || 0, 'Encoded', { good: true }) +
+      renderStat(summary.total || 0, 'Total', { href: { page: 'rejections', toggle: { field: 'encoded', value: '' } } }) +
+      renderStat(summary.unencoded || 0, 'Unencoded', { color: 'var(--color-yellow)', href: { page: 'rejections', toggle: { field: 'encoded', value: 'no' } } }) +
+      renderStat(summary.encoded || 0, 'Encoded', { good: !curEncoded || curEncoded === 'yes', href: { page: 'rejections', toggle: { field: 'encoded', value: 'yes' } } }) +
       renderStat((summary.by_domain || []).length, 'Domains');
+
+    var cards = el.querySelectorAll('.wh-stat-clickable');
+    cards.forEach(function(card) {
+      var v = card.dataset.toggleValue;
+      if (curEncoded === v && v !== '') {
+        card.classList.add('wh-stat-active');
+      }
+    });
   }
 
   _renderPatterns(patternsData) {

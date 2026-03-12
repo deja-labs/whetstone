@@ -117,7 +117,17 @@ function renderStat(value, label, opts) {
   if (opts.good) valClass += ' good';
   if (opts.warn) valClass += ' warn';
   var style = opts.color ? ' style="color:' + opts.color + '"' : '';
-  var h = '<div class="wh-stat">';
+  var clickable = opts.href ? ' wh-stat-clickable' : '';
+  var onclick = '';
+  var dataAttrs = '';
+  if (opts.href && opts.href.toggle) {
+    var toggleFn = opts.href.page === 'rejections' ? 'toggleRejectionFilter' : 'toggleConstraintFilter';
+    onclick = ' onclick="' + toggleFn + '(\\'' + opts.href.toggle.field + '\\', \\'' + opts.href.toggle.value + '\\')"';
+    dataAttrs = ' data-toggle-field="' + opts.href.toggle.field + '" data-toggle-value="' + opts.href.toggle.value + '"';
+  } else if (opts.href) {
+    onclick = ' onclick="navigateWithFilters(\\'' + opts.href.page + '\\', ' + JSON.stringify(opts.href.filters || {}).replace(/"/g, "'") + ')"';
+  }
+  var h = '<div class="wh-stat' + clickable + '"' + onclick + dataAttrs + '>';
   h += '<div class="' + valClass + '"' + style + '>' + esc(String(value)) + '</div>';
   h += '<div class="wh-stat-label">' + esc(label) + '</div>';
   if (opts.delta) {
@@ -130,6 +140,54 @@ function renderStat(value, label, opts) {
   }
   h += '</div>';
   return h;
+}
+
+function setFilterValue(elId, value) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  if (el._choices) {
+    el._choices.setChoiceByValue(value);
+  } else {
+    el.value = value;
+  }
+}
+
+function navigateWithFilters(page, filters) {
+  var app = document.querySelector('whet-app');
+  app.switchPage(page);
+  filters = filters || {};
+  setTimeout(function() {
+    if (page === 'rejections') {
+      if (filters.encoded) setFilterValue('rf-encoded', filters.encoded);
+      if (filters.domain) setFilterValue('rf-domain', filters.domain);
+      if (typeof applyRejectionFilters === 'function') applyRejectionFilters();
+    } else if (page === 'constraints') {
+      if (filters.status) setFilterValue('cf-status', filters.status);
+      if (filters.severity) setFilterValue('cf-severity', filters.severity);
+      if (filters.domain) setFilterValue('cf-domain', filters.domain);
+      if (typeof applyConstraintFilters === 'function') applyConstraintFilters();
+    }
+  }, 100);
+}
+
+function toggleConstraintFilter(field, value) {
+  var elId = field === 'status' ? 'cf-status' : field === 'severity' ? 'cf-severity' : null;
+  if (!elId) return;
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var newVal = (el.value === value) ? '' : value;
+  setFilterValue(elId, newVal);
+  if (typeof applyConstraintFilters === 'function') applyConstraintFilters();
+}
+
+function toggleRejectionFilter(field, value) {
+  var elId = field === 'encoded' ? 'rf-encoded' : field === 'domain' ? 'rf-domain' : null;
+  if (!elId) return;
+  var el = document.getElementById(elId);
+  if (!el) return;
+  var newVal = (el.value === value) ? '' : value;
+  setFilterValue(elId, newVal);
+  if (typeof applyRejectionFilters === 'function') applyRejectionFilters();
 }
 
 async function fetchJson(path) {

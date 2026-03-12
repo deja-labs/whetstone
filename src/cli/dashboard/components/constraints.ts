@@ -161,14 +161,27 @@ class WhetConstraints extends WhetBase {
     var bySev = summary.by_severity || [];
     for (var j = 0; j < bySev.length; j++) sevMap[bySev[j].severity] = bySev[j].count;
 
+    var curStatus = document.getElementById('cf-status').value;
+    var curSev = document.getElementById('cf-severity').value;
+
     el.innerHTML =
-      renderStat(total, 'Total') +
-      renderStat(statusMap.active || 0, 'Active', { good: true }) +
-      renderStat(statusMap.deprecated || 0, 'Deprecated') +
-      renderStat(statusMap.superseded || 0, 'Superseded') +
-      renderStat(sevMap.critical || 0, 'Critical', { color: 'var(--color-red)' }) +
-      renderStat(sevMap.important || 0, 'Important', { color: 'var(--color-yellow)' }) +
-      renderStat(sevMap.preference || 0, 'Preference', { color: 'var(--color-purple)' });
+      renderStat(total, 'Total', { href: { page: 'constraints', toggle: { field: 'status', value: '' } } }) +
+      renderStat(statusMap.active || 0, 'Active', { good: !curStatus || curStatus === 'active', href: { page: 'constraints', toggle: { field: 'status', value: 'active' } } }) +
+      renderStat(statusMap.deprecated || 0, 'Deprecated', { href: { page: 'constraints', toggle: { field: 'status', value: 'deprecated' } } }) +
+      renderStat(statusMap.superseded || 0, 'Superseded', { href: { page: 'constraints', toggle: { field: 'status', value: 'superseded' } } }) +
+      renderStat(sevMap.critical || 0, 'Critical', { color: 'var(--color-red)', href: { page: 'constraints', toggle: { field: 'severity', value: 'critical' } } }) +
+      renderStat(sevMap.important || 0, 'Important', { color: 'var(--color-yellow)', href: { page: 'constraints', toggle: { field: 'severity', value: 'important' } } }) +
+      renderStat(sevMap.preference || 0, 'Preference', { color: 'var(--color-purple)', href: { page: 'constraints', toggle: { field: 'severity', value: 'preference' } } });
+
+    // Highlight the active filter card
+    var cards = el.querySelectorAll('.wh-stat-clickable');
+    cards.forEach(function(card) {
+      var t = card.dataset.toggleField;
+      var v = card.dataset.toggleValue;
+      if ((t === 'status' && curStatus === v && v !== '') || (t === 'severity' && curSev === v && v !== '')) {
+        card.classList.add('wh-stat-active');
+      }
+    });
   }
 
   _renderList(constraints) {

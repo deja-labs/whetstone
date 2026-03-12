@@ -145,6 +145,18 @@ body {
 .wh-stat-delta {
   @apply text-[11px] font-mono mt-2;
 }
+.wh-stat-clickable {
+  @apply cursor-pointer;
+}
+.wh-stat-clickable:hover {
+  @apply border-accent bg-card-hover scale-[1.03];
+}
+.wh-stat-clickable:active {
+  @apply scale-[0.98];
+}
+.wh-stat-active {
+  @apply border-accent bg-glow-accent;
+}
 
 /* ── Card ── */
 
