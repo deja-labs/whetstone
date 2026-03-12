@@ -2,6 +2,13 @@
 
 All notable changes to Whetstone are documented here.
 
+## [0.5.1] - 2026-03-12
+
+### Fixes
+
+- Fix startup failures caused by stale WAL/SHM files left behind after a crash or forceful process termination
+
+
 ## [0.5.0] - 2026-03-12
 
 ### Features
