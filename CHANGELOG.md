@@ -2,6 +2,38 @@
 
 All notable changes to Whetstone are documented here.
 
+## [0.5.0] - 2026-03-12
+
+### Features
+
+- Add inline editing to the dashboard — click any field on a rejection or constraint to edit it in place, with support for text inputs, textareas, dropdowns, domain search, and a tag pill editor
+- Add velocity tracking to pattern detection — each cluster now reports whether similar rejections are accelerating or decelerating, and results are sorted by urgency (velocity × count)
+- Add leaky constraint detection — pass `include_encoded: true` to surface constraints that aren't preventing the rejections they encode
+- Add suggested constraint drafts to pattern clusters — pass `suggest_constraints: true` to get an auto-generated title, rule, category, and severity for each pattern
+- [WHET-0007] Add AI-powered changelog generation — `scripts/changelog.mjs` now calls Claude when `ANTHROPIC_API_KEY` is set, with a `--noai` flag and raw commit fallback
+- Add `scripts/draft-pr.mjs` — generates a draft GitHub PR description from the current branch using Claude and the project's PR template
+
+### Improvements
+
+- Improve pattern detection accuracy by replacing Jaccard similarity with TF-IDF cosine similarity, adding stemming, bigram support, and noise word filtering
+- Improve theme extraction to surface the most discriminative keywords across a cluster rather than only tokens shared by every member
+- Move the "Encode These Next" patterns section above the domain/constraint charts on the overview page so it's visible without scrolling
+- Show patterns section on the Rejections page unconditionally, with an empty state message when no patterns exist
+- Show velocity badges (⚡ accelerating rapidly, ↑ accelerating, ↓ decelerating) on pattern cards in both the overview and rejections views
+- Show suggested constraint drafts inline on pattern cards in the dashboard
+- Add `--dry-run` flag to `scripts/changelog.mjs` to preview changelog output without writing to disk
+- Add WAL checkpoint calls after every write operation so the `.db` file stays current for git commits
+- Close the database connection after CLI tool commands complete
+
+### Documentation
+
+- Add full documentation site under `docs/` covering dashboard overview, rejections, constraints, pattern detection, and inline editing
+- Add structured backlog under `docs/backlog/` with twelve WHET story files (WHET-0001 through WHET-0012) and an ideas log
+- Add `AGENTS.md` with guidance for AI agents working in this repo
+- Add `CLAUDE.md` with project conventions including commit message format
+- Add GitHub PR template at `.github/pull_request_template.md`
+
+
 ## [0.4.0] - 2026-03-11
 
 - Tightened up the styling of dashboard (7b2deca)
