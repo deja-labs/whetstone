@@ -2,6 +2,37 @@
 
 All notable changes to Whetstone are documented here.
 
+## [0.6.0] - 2026-03-12
+
+### Features
+
+- **[WHET-0008]** Add WebSocket support for real-time dashboard updates — the dashboard now reflects changes instantly without polling, with a live/offline indicator replacing the old auto-refresh toggle
+- **[WHET-0002]** Add "Link to Constraint" action in the rejection modal, allowing unencoded rejections to be linked directly to an existing constraint from within the dashboard
+- Add delete button for unlinked rejections — rejections not yet linked to a constraint can now be permanently deleted from the rejection modal and the rejections list
+- **[WHET-0013]** Add favicon, Apple touch icon, and logo mark to the dashboard; browser tabs and bookmarks now display the Whetstone branding
+
+### Improvements
+
+- **[WHET-0006]** Make domain bars on the Overview page clickable — clicking an encoded or unencoded bar segment navigates to the Rejections page pre-filtered by domain and encoding status; coverage gap rows are also clickable
+- **[WHET-0003]** Make stats cards on Overview, Rejections, and Constraints pages clickable for cross-page navigation with pre-applied filters; active filters are highlighted on the stat cards
+- **[WHET-0012]** Add full keyboard navigation within modals — editable fields are focusable via Tab, activated with Enter/Space, and Escape cancels edits without closing the modal; Tab cycles focus within the open modal
+- Switch dashboard routing from hash-based (`#constraints`) to path-based (`/constraints`, `/rejections`) with proper browser history support
+- Replace auto-open browser behavior on dashboard start with a formatted URL/port/DB summary printed to the terminal
+- Display domain badges as clickable drilldown links throughout the dashboard (constraint and rejection details navigate to filtered rejections)
+- Improve applied-count display with green text styling across constraint cards and overview sections
+
+### Documentation
+
+- Add `docs/backlog/AGENTS.md` describing the backlog workflow for AI agents
+- Update dashboard docs to reflect new routing, WebSocket status indicator, and drilldown interactions
+
+### Internal
+
+- Write a `.signal` file on every database write to enable cross-process dashboard notifications without relying on SQLite WAL polling
+- Add `scripts/generate-favicons.mjs` and `scripts/generate-logos.mjs` for regenerating brand assets from source SVG
+- Add logo concept SVGs and a preview page under `assets/logo-concepts/`
+
+
 ## [0.5.1] - 2026-03-12
 
 ### Fixes
