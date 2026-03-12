@@ -115,65 +115,125 @@ function tokenize(text: string): string[] {
     .map(stem);
 }
 
-function tokenizeToSet(text: string): Set<string> {
+// Returns an array of tokens (unigrams + bigrams) with duplicates preserved
+// for term frequency counting.
+function tokenizeWithBigrams(text: string): string[] {
   const words = tokenize(text);
-
-  // Add bigrams — captures phrases like "error_handling", "type_check"
-  const tokens = new Set(words);
+  const tokens = words.slice();
   for (let i = 0; i < words.length - 1; i++) {
-    tokens.add(words[i] + "_" + words[i + 1]);
+    tokens.push(words[i] + "_" + words[i + 1]);
   }
-
   return tokens;
 }
 
-// ── Similarity ───────────────────────────────────────────────────────
+// ── TF-IDF ───────────────────────────────────────────────────────────
 
-function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 0;
-  let intersection = 0;
-  for (const token of a) {
-    if (b.has(token)) intersection++;
+// Term frequency: count of each token in a document, normalized by doc length.
+function computeTf(tokens: string[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const t of tokens) {
+    counts.set(t, (counts.get(t) ?? 0) + 1);
   }
-  const union = a.size + b.size - intersection;
-  return union === 0 ? 0 : intersection / union;
+  const tf = new Map<string, number>();
+  for (const [term, count] of counts) {
+    tf.set(term, count / tokens.length);
+  }
+  return tf;
+}
+
+// Inverse document frequency: log(N / df) where df = number of documents
+// containing the term. Tokens appearing in every document get IDF ≈ 0.
+function computeIdf(documents: Map<string, number>[]): Map<string, number> {
+  const df = new Map<string, number>();
+  for (const doc of documents) {
+    for (const term of doc.keys()) {
+      df.set(term, (df.get(term) ?? 0) + 1);
+    }
+  }
+  const n = documents.length;
+  const idf = new Map<string, number>();
+  for (const [term, count] of df) {
+    idf.set(term, Math.log(n / count));
+  }
+  return idf;
+}
+
+// TF-IDF vector for a single document.
+function tfidfVector(tf: Map<string, number>, idf: Map<string, number>): Map<string, number> {
+  const vec = new Map<string, number>();
+  for (const [term, tfVal] of tf) {
+    const idfVal = idf.get(term) ?? 0;
+    const weight = tfVal * idfVal;
+    if (weight > 0) {
+      vec.set(term, weight);
+    }
+  }
+  return vec;
+}
+
+// Cosine similarity between two sparse TF-IDF vectors.
+function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): number {
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (const [term, wa] of a) {
+    normA += wa * wa;
+    const wb = b.get(term);
+    if (wb !== undefined) {
+      dot += wa * wb;
+    }
+  }
+  for (const wb of b.values()) {
+    normB += wb * wb;
+  }
+
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
 }
 
 // ── Theme extraction ─────────────────────────────────────────────────
 
-function extractTheme(tokenSets: Set<string>[]): string {
-  if (tokenSets.length === 0) return "(similar rejections)";
+function extractTheme(
+  tfidfVectors: Map<string, number>[],
+  idf: Map<string, number>,
+): string {
+  if (tfidfVectors.length === 0) return "(similar rejections)";
 
-  // Count how many members contain each token
-  const freq = new Map<string, number>();
-  for (const s of tokenSets) {
-    for (const token of s) {
-      freq.set(token, (freq.get(token) ?? 0) + 1);
+  // Score each token by: (number of members containing it) × IDF.
+  // This surfaces tokens that are common within the cluster but rare overall.
+  const memberCount = new Map<string, number>();
+  for (const vec of tfidfVectors) {
+    for (const term of vec.keys()) {
+      memberCount.set(term, (memberCount.get(term) ?? 0) + 1);
     }
   }
 
-  // Tokens present in >50% of cluster members, prefer bigrams
-  const threshold = Math.max(2, Math.ceil(tokenSets.length * 0.5));
+  const threshold = Math.max(2, Math.ceil(tfidfVectors.length * 0.5));
   const candidates: [string, number][] = [];
-  for (const [token, count] of freq) {
+  for (const [token, count] of memberCount) {
     if (count >= threshold) {
-      // Bigrams score higher — they're more descriptive
-      const score = token.includes("_") ? count * 2 : count;
-      candidates.push([token, score]);
+      const idfVal = idf.get(token) ?? 1;
+      // Bigrams get a 2x boost — they're more descriptive
+      const bigramBoost = token.includes("_") ? 2 : 1;
+      candidates.push([token, count * idfVal * bigramBoost]);
     }
   }
 
   if (candidates.length === 0) {
-    // Fallback: tokens present in all members
-    const shared = [...tokenSets[0]].filter((t) =>
-      tokenSets.every((s) => s.has(t)),
-    );
-    return shared.length > 0
-      ? shared.map(formatToken).join(", ")
+    // Fallback: highest-IDF tokens present in all members
+    const allShared: [string, number][] = [];
+    for (const [token, count] of memberCount) {
+      if (count === tfidfVectors.length) {
+        allShared.push([token, idf.get(token) ?? 0]);
+      }
+    }
+    allShared.sort((a, b) => b[1] - a[1]);
+    return allShared.length > 0
+      ? allShared.slice(0, 5).map(([t]) => formatToken(t)).join(", ")
       : "(similar rejections)";
   }
 
-  // Sort by score descending, take top 5
   candidates.sort((a, b) => b[1] - a[1]);
   return candidates
     .slice(0, 5)
@@ -203,10 +263,20 @@ function rejectionText(item: RejectionRow): string {
 function clusterBySimilarity(
   items: RejectionRow[],
   threshold: number,
-): RejectionRow[][] {
-  if (items.length === 0) return [];
+): { clusters: RejectionRow[][]; tfidfVecs: Map<string, number>[]; idf: Map<string, number> } {
+  if (items.length === 0) return { clusters: [], tfidfVecs: [], idf: new Map() };
 
-  const tokenSets = items.map((item) => tokenizeToSet(rejectionText(item)));
+  // Tokenize all documents
+  const allTokens = items.map((item) => tokenizeWithBigrams(rejectionText(item)));
+
+  // Compute TF for each document
+  const tfMaps = allTokens.map(computeTf);
+
+  // Compute IDF across the corpus
+  const idf = computeIdf(tfMaps);
+
+  // Build TF-IDF vectors
+  const tfidfVecs = tfMaps.map((tf) => tfidfVector(tf, idf));
 
   // Union-Find
   const parent = items.map((_, i) => i);
@@ -221,26 +291,36 @@ function clusterBySimilarity(
     parent[find(a)] = find(b);
   }
 
+  // Compare all pairs using cosine similarity on TF-IDF vectors
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
-      if (jaccardSimilarity(tokenSets[i], tokenSets[j]) >= threshold) {
+      if (cosineSimilarity(tfidfVecs[i], tfidfVecs[j]) >= threshold) {
         union(i, j);
       }
     }
   }
 
-  const groups = new Map<number, RejectionRow[]>();
+  // Group by root
+  const groups = new Map<number, number[]>();
   for (let i = 0; i < items.length; i++) {
     const root = find(i);
     const group = groups.get(root) ?? [];
-    group.push(items[i]);
+    group.push(i);
     groups.set(root, group);
   }
 
-  return Array.from(groups.values());
+  const clusters = Array.from(groups.values()).map(
+    (indices) => indices.map((i) => items[i]),
+  );
+
+  return { clusters, tfidfVecs, idf };
 }
 
 // ── Main ─────────────────────────────────────────────────────────────
+
+// Cosine similarity threshold — higher than Jaccard's 0.25 because cosine
+// on TF-IDF vectors produces tighter, more meaningful scores.
+const SIMILARITY_THRESHOLD = 0.15;
 
 export function patterns(input: PatternsInput): PatternCluster[] {
   const db = getDb();
@@ -272,15 +352,20 @@ export function patterns(input: PatternsInput): PatternCluster[] {
   const results: PatternCluster[] = [];
 
   for (const [domain, domainRows] of byDomain) {
-    const clusters = clusterBySimilarity(domainRows, 0.25);
+    const { clusters, tfidfVecs, idf } = clusterBySimilarity(domainRows, SIMILARITY_THRESHOLD);
+
+    // Build an index mapping item ID → tfidf vector index
+    const idToIdx = new Map<string, number>();
+    for (let i = 0; i < domainRows.length; i++) {
+      idToIdx.set(domainRows[i].id, i);
+    }
 
     for (const cluster of clusters) {
       if (cluster.length < 2) continue;
 
-      const tokenSets = cluster.map((item) =>
-        tokenizeToSet(rejectionText(item)),
-      );
-      const theme = extractTheme(tokenSets);
+      // Gather TF-IDF vectors for this cluster's members
+      const clusterVecs = cluster.map((item) => tfidfVecs[idToIdx.get(item.id)!]);
+      const theme = extractTheme(clusterVecs, idf);
 
       results.push({
         domain,
