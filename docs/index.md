@@ -50,7 +50,7 @@ A web dashboard provides visibility into the rejection/constraint lifecycle and 
 | Command | Purpose |
 |---------|---------|
 | `whetstone init` | Set up `.whetstone/` directory and install git hooks |
-| `whetstone dashboard` | Launch the web dashboard |
+| `whetstone dashboard` | Launch the web dashboard (prints URL, does not auto-open browser) |
 | `whetstone export` | Export constraints (used by pre-push hook) |
 | `whetstone hook` | Install the pre-push git hook |
 | `whetstone clear-db` | Reset the database |
