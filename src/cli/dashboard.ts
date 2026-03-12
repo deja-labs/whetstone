@@ -20,8 +20,19 @@ function sendJson(res: ServerResponse, status: number, data: unknown): void {
   res.writeHead(status, {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
   });
   res.end(JSON.stringify(data));
+}
+
+function readBody(req: IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    req.on("end", () => resolve(Buffer.concat(chunks).toString()));
+    req.on("error", reject);
+  });
 }
 
 function sendHtml(res: ServerResponse, html: string): void {
@@ -45,7 +56,7 @@ export async function runDashboard(args: string[]): Promise<void> {
   }
 
   // Pre-load database and tool modules
-  const { getDb, closeDb } = await import("../db/connection.js");
+  const { getDb, closeDb, checkpoint } = await import("../db/connection.js");
   getDb(); // fail fast if db can't initialize
 
   const { VERSION } = await import("../lib/version.js");
@@ -57,10 +68,20 @@ export async function runDashboard(args: string[]): Promise<void> {
 
   const html = getDashboardHtml(VERSION);
 
-  const server = createServer((req: IncomingMessage, res: ServerResponse) => {
+  const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
     const url = new URL(req.url ?? "/", `http://localhost:${port}`);
     const path = url.pathname;
     const method = req.method ?? "GET";
+
+    if (method === "OPTIONS") {
+      res.writeHead(204, {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      });
+      res.end();
+      return;
+    }
 
     try {
       if (path === "/" || path === "") {
@@ -154,6 +175,8 @@ export async function runDashboard(args: string[]): Promise<void> {
         sendJson(res, 200, patterns({
           domain: url.searchParams.get("domain") ?? undefined,
           since: url.searchParams.get("since") ?? undefined,
+          include_encoded: url.searchParams.get("include_encoded") === "true",
+          suggest_constraints: true,
         }));
       } else if (path.startsWith("/api/rejection/")) {
         const parts = path.slice("/api/rejection/".length).split("/");
@@ -166,7 +189,27 @@ export async function runDashboard(args: string[]): Promise<void> {
           if (!rejection) { sendJson(res, 404, { error: "Rejection not found" }); return; }
           if (!rejection.constraint_id) { sendJson(res, 400, { error: "Rejection is not linked to any constraint" }); return; }
           db.prepare("UPDATE rejections SET constraint_id = NULL WHERE id = ?").run(id);
+          checkpoint();
           sendJson(res, 200, { success: true, rejection_id: id });
+        } else if (method === "PATCH" && !parts[1]) {
+          const rejection = db.prepare("SELECT id FROM rejections WHERE id = ?").get(id) as { id: string } | undefined;
+          if (!rejection) { sendJson(res, 404, { error: "Rejection not found" }); return; }
+          const body = JSON.parse(await readBody(req));
+          const allowed = ["domain", "description", "reasoning", "raw_output"] as const;
+          const sets: string[] = [];
+          const values: unknown[] = [];
+          for (const field of allowed) {
+            if (field in body) {
+              sets.push(`${field} = ?`);
+              values.push(body[field]);
+            }
+          }
+          if (sets.length === 0) { sendJson(res, 400, { error: "No valid fields to update" }); return; }
+          values.push(id);
+          db.prepare(`UPDATE rejections SET ${sets.join(", ")} WHERE id = ?`).run(...values);
+          checkpoint();
+          const updated = db.prepare("SELECT * FROM rejections WHERE id = ?").get(id);
+          sendJson(res, 200, updated);
         } else {
           const rejection = db.prepare("SELECT * FROM rejections WHERE id = ?").get(id);
           if (!rejection) { sendJson(res, 404, { error: "Rejection not found" }); return; }
@@ -186,7 +229,28 @@ export async function runDashboard(args: string[]): Promise<void> {
             return;
           }
           db.prepare("DELETE FROM constraints WHERE id = ?").run(id);
+          checkpoint();
           sendJson(res, 200, { success: true, constraint_id: id });
+        } else if (method === "PATCH") {
+          const constraint = db.prepare("SELECT id FROM constraints WHERE id = ?").get(id) as { id: string } | undefined;
+          if (!constraint) { sendJson(res, 404, { error: "Constraint not found" }); return; }
+          const body = JSON.parse(await readBody(req));
+          const allowed = ["title", "domain", "category", "rule", "reasoning", "rejected_example", "accepted_example", "tags", "severity", "status", "source"] as const;
+          const sets: string[] = ["updated_at = ?"];
+          const values: unknown[] = [new Date().toISOString()];
+          for (const field of allowed) {
+            if (field in body) {
+              sets.push(`${field} = ?`);
+              values.push(field === "tags" && Array.isArray(body[field]) ? JSON.stringify(body[field]) : body[field]);
+            }
+          }
+          if (sets.length === 1) { sendJson(res, 400, { error: "No valid fields to update" }); return; }
+          values.push(id);
+          db.prepare(`UPDATE constraints SET ${sets.join(", ")} WHERE id = ?`).run(...values);
+          checkpoint();
+          const updated = db.prepare("SELECT * FROM constraints WHERE id = ?").get(id);
+          const linkedRejections = db.prepare("SELECT * FROM rejections WHERE constraint_id = ? ORDER BY created_at DESC").all(id);
+          sendJson(res, 200, { ...updated as Record<string, unknown>, linked_rejections: linkedRejections });
         } else {
           const constraint = db.prepare("SELECT * FROM constraints WHERE id = ?").get(id);
           if (!constraint) { sendJson(res, 404, { error: "Constraint not found" }); return; }

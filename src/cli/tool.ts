@@ -145,6 +145,8 @@ export async function runTool(command: string, args: string[]): Promise<void> {
         const result = patterns({
           domain: flags.get("domain"),
           since: flags.get("since"),
+          include_encoded: flags.get("include-encoded") === "true",
+          suggest_constraints: flags.get("suggest-constraints") === "true",
         });
         console.log(formatPatternsResult(result));
         break;
@@ -180,5 +182,8 @@ export async function runTool(command: string, args: string[]): Promise<void> {
   } catch (err) {
     console.error(`Error: ${err instanceof Error ? err.message : err}`);
     process.exit(1);
+  } finally {
+    const { closeDb } = await import("../db/connection.js");
+    closeDb();
   }
 }

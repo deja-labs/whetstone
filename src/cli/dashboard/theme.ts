@@ -257,6 +257,60 @@ body {
          border-l-2 border-l-edge-hover;
 }
 
+/* ── Editable fields ── */
+.wh-field-editable {
+  @apply cursor-text rounded-md px-2 py-1 -mx-2 -my-1 transition-colors duration-150;
+  border: 1px solid transparent;
+}
+.wh-field-editable:hover {
+  @apply border-edge-hover bg-raised/50;
+}
+.wh-field-saved {
+  @apply bg-green/10;
+  border-color: var(--green) !important;
+}
+.wh-inline-edit {
+  @apply w-full bg-raised text-primary text-sm rounded-md px-3 py-2 border border-accent
+         font-sans leading-relaxed outline-none;
+  font-family: inherit;
+}
+textarea.wh-inline-edit {
+  @apply resize-y min-h-[80px];
+}
+textarea.wh-inline-edit-code {
+  @apply font-mono text-[13px];
+}
+.wh-domain-edit-wrapper {
+  @apply w-full;
+}
+.wh-domain-edit-wrapper .choices {
+  @apply mb-0;
+}
+.wh-domain-edit-wrapper .choices__inner {
+  @apply bg-raised border-accent;
+}
+
+/* ── Tag input ── */
+.wh-tag-input {
+  @apply flex flex-wrap items-center gap-1.5 bg-raised border border-accent rounded-md px-2 py-1.5
+         cursor-text min-h-[38px];
+}
+.wh-tag-pill {
+  @apply inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full
+         bg-glow-accent text-accent border border-accent/20;
+}
+.wh-tag-remove {
+  @apply bg-transparent border-none text-accent/60 cursor-pointer text-sm leading-none
+         hover:text-red ml-0.5 p-0;
+}
+.wh-tag-text {
+  @apply bg-transparent border-none outline-none text-primary text-sm flex-1 min-w-[120px] py-0.5;
+  font-family: inherit;
+}
+.wh-tag-text::placeholder {
+  @apply text-muted text-xs;
+}
+
 /* ── Empty state ── */
 
 .wh-empty {

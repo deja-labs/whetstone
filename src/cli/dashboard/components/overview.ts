@@ -17,6 +17,10 @@ class WhetOverview extends WhetBase {
   _template() {
     return '<div class="wh-page">' +
       '<section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4" id="stats-cards"></section>' +
+      '<section class="wh-section" id="patterns-section">' +
+        '<h2>Encode These Next <span class="text-[11px] text-muted font-mono font-normal">\\u2014 recurring rejection patterns without constraints</span></h2>' +
+        '<div id="patterns-list"></div>' +
+      '</section>' +
       '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
         '<div class="wh-section"><h2>Rejections by Domain</h2><div id="domain-bars"></div></div>' +
         '<div class="wh-section"><h2>Most Applied Constraints</h2><div id="applied-list"></div></div>' +
@@ -24,10 +28,6 @@ class WhetOverview extends WhetBase {
       '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
         '<div class="wh-section"><h2>Unencoded Rejections</h2><div id="unencoded-list"></div></div>' +
         '<div class="wh-section"><h2>Recently Encoded</h2><div id="recently-encoded-list"></div></div>' +
-      '</section>' +
-      '<section class="wh-section" id="patterns-section" style="display:none">' +
-        '<h2>Encode These Next <span class="text-[11px] text-muted font-mono font-normal">\\u2014 recurring rejection patterns without constraints</span></h2>' +
-        '<div id="patterns-list"></div>' +
       '</section>' +
       '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="gaps-graduation-section" style="display:none">' +
         '<div class="wh-section" id="domain-gaps-section"><h2>Domain Gaps <span class="text-[11px] text-muted font-mono font-normal">\\u2014 taste being lost</span></h2><div id="domain-gaps-list"></div></div>' +
@@ -221,20 +221,25 @@ class WhetOverview extends WhetBase {
   }
 
   _renderPatterns(patternsData) {
-    var section = document.getElementById('patterns-section');
     var el = document.getElementById('patterns-list');
     if (!patternsData || patternsData.length === 0) {
-      section.style.display = 'none';
+      el.innerHTML = '<div class="wh-empty">No recurring patterns detected right now. Patterns appear when similar rejections accumulate without being encoded as constraints.</div>';
       return;
     }
-    section.style.display = '';
     var html = '';
     for (var i = 0; i < Math.min(patternsData.length, 5); i++) {
       var p = patternsData[i];
+
+      // Velocity badge
+      var velocityHtml = '';
+      if (p.velocity >= 3) velocityHtml = '<span class="text-[11px] font-mono font-semibold text-red ml-2">\\u26A1 accelerating rapidly</span>';
+      else if (p.velocity >= 1.5) velocityHtml = '<span class="text-[11px] font-mono font-semibold text-yellow ml-2">\\u2191 accelerating</span>';
+      else if (p.velocity <= 0.5 && p.velocity > 0) velocityHtml = '<span class="text-[11px] font-mono text-muted ml-2">\\u2193 decelerating</span>';
+
       html += '<div class="p-5 bg-gradient-to-r from-glow-orange to-transparent rounded-lg mb-4 border border-edge border-l-[3px] border-l-orange">' +
         '<div class="flex justify-between items-center mb-3">' +
         domainBadge(p.domain) +
-        '<span class="font-mono text-xs text-orange font-semibold">' + p.count + ' similar rejections</span>' +
+        '<span class="font-mono text-xs text-orange font-semibold">' + p.count + ' similar rejections' + velocityHtml + '</span>' +
         '</div>' +
         '<div class="text-xs font-mono text-muted mb-2">Keywords: ' + esc(p.theme) + '</div>' +
         '<div class="pattern-examples text-[13px] text-primary leading-normal">';
@@ -244,7 +249,30 @@ class WhetOverview extends WhetBase {
       if (p.descriptions.length > 3) {
         html += '<div class="text-muted italic py-1">+' + (p.descriptions.length - 3) + ' more</div>';
       }
-      html += '</div></div>';
+      html += '</div>';
+
+      // Leaky constraint warning
+      if (p.leaky_constraint_id) {
+        html += '<div class="mt-3 pt-3 border-t border-edge text-[12px] text-yellow">' +
+          '\\u26A0 Leaky constraint: <span class="font-medium text-primary">' + esc(p.leaky_constraint_title || '') + '</span>' +
+          ' <span class="font-mono text-muted">(' + esc(p.leaky_constraint_id) + ')</span></div>';
+      }
+
+      // Suggested constraint draft
+      if (p.suggested_constraint) {
+        var sc = p.suggested_constraint;
+        html += '<div class="mt-3 pt-3 border-t border-edge">' +
+          '<div class="text-[11px] font-mono text-accent mb-2">Suggested constraint:</div>' +
+          '<div class="text-[13px] text-primary font-medium">' + esc(sc.title) + '</div>' +
+          '<div class="text-[12px] text-muted mt-1 leading-normal">' + esc(sc.rule) + '</div>' +
+          '<div class="flex gap-3 mt-2">' +
+            '<span class="wh-badge">' + esc(sc.category) + '</span>' +
+            severityBadge(sc.severity) +
+          '</div>' +
+        '</div>';
+      }
+
+      html += '</div>';
     }
     el.innerHTML = html;
   }

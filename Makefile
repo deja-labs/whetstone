@@ -3,7 +3,7 @@
 # Run `make help` for available targets.
 
 .PHONY: help install setup build dev test clean init \
-        version release gh-release npm-publish \
+        version release release-notes-preview release-notes-preview-noai gh-release npm-publish pr pr-preview \
         tool-reject tool-constrain tool-get-constraints tool-search \
         tool-applied tool-link tool-update-constraint tool-export tool-patterns tool-stats tool-list \
         dashboard
@@ -75,6 +75,21 @@ VERSION = $(shell node -p "require('./package.json').version")
 version: ## Show current version
 	@printf '  $(CYAN)v$(VERSION)$(RESET)\n'
 
+release-notes-preview: ## Preview release notes (dry run, with Claude AI)
+	@if [ -f .env ]; then set -a; . ./.env; set +a; fi; \
+	node scripts/changelog.mjs preview --dry-run
+
+release-notes-preview-noai: ## Preview release notes (dry run, without Claude AI)
+	@node scripts/changelog.mjs preview --dry-run --noai
+
+pr: ## Create a draft PR with AI-generated description (BASE= optional, default: develop)
+	@if [ -f .env ]; then set -a; . ./.env; set +a; fi; \
+	node scripts/draft-pr.mjs $(if $(BASE),--base=$(BASE))
+
+pr-preview: ## Preview PR description without creating it
+	@if [ -f .env ]; then set -a; . ./.env; set +a; fi; \
+	node scripts/draft-pr.mjs --dry-run $(if $(BASE),--base=$(BASE))
+
 release: ## Release: make release <patch|minor|major>
 	@BUMP=$(filter patch minor major,$(MAKECMDGOALS)); \
 	if [ -z "$$BUMP" ]; then \
@@ -98,6 +113,7 @@ release: ## Release: make release <patch|minor|major>
 	RELEASE_BRANCH="release/$$NEW_VERSION"; \
 	printf '  $(GREEN)Bumped to v%s$(RESET)\n' "$$NEW_VERSION"; \
 	git checkout -b "$$RELEASE_BRANCH"; \
+	if [ -f .env ]; then set -a; . ./.env; set +a; fi; \
 	node scripts/changelog.mjs "$$NEW_VERSION"; \
 	git add package.json package-lock.json CHANGELOG.md; \
 	git commit -m "release: v$$NEW_VERSION"; \

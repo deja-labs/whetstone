@@ -77,10 +77,30 @@ export function formatPatternsResult(patterns: PatternCluster[]): string {
   const lines = patterns.map((p) => {
     const descs = p.descriptions.map((d) => `    - ${d}`).join("\n");
     const ids = p.rejection_ids.join(", ");
-    return `**${p.domain}** — "${p.theme}" (${p.count} rejections):\n${descs}\n    IDs: ${ids}`;
+
+    // Velocity indicator
+    let velocityLabel = "";
+    if (p.velocity >= 3) velocityLabel = " accelerating rapidly";
+    else if (p.velocity >= 1.5) velocityLabel = " accelerating";
+    else if (p.velocity <= 0.5) velocityLabel = " decelerating";
+
+    // Leaky constraint indicator
+    let leakyLabel = "";
+    if (p.leaky_constraint_id) {
+      leakyLabel = `\n    Leaky constraint: "${p.leaky_constraint_title}" (${p.leaky_constraint_id})`;
+    }
+
+    // Suggested constraint draft
+    let draftLabel = "";
+    if (p.suggested_constraint) {
+      const sc = p.suggested_constraint;
+      draftLabel = `\n    Suggested constraint:\n      Title: ${sc.title}\n      Rule: ${sc.rule}\n      Category: ${sc.category} | Severity: ${sc.severity}`;
+    }
+
+    return `**${p.domain}** — "${p.theme}" (${p.count} rejections, velocity: ${p.velocity}${velocityLabel}):\n${descs}\n    IDs: ${ids}${leakyLabel}${draftLabel}`;
   });
 
-  return `Recurring rejection patterns:\n\n${lines.join("\n\n")}`;
+  return `Recurring rejection patterns (sorted by urgency):\n\n${lines.join("\n\n")}`;
 }
 
 export function formatStatsResult(s: StatsResult): string {

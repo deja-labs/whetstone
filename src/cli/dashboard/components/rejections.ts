@@ -35,7 +35,7 @@ class WhetRejections extends WhetBase {
       '<button class="wh-filter-btn" onclick="clearRejectionFilters()">Clear</button>' +
     '</div>' +
     '<div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="rejections-summary"></div>' +
-    '<section class="wh-section" id="rej-patterns-section" style="display:none">' +
+    '<section class="wh-section" id="rej-patterns-section">' +
       '<h2>Patterns <span class="text-[11px] text-muted font-mono font-normal">\\u2014 recurring themes in unencoded rejections</span></h2>' +
       '<div id="rej-patterns-list"></div>' +
     '</section>' +
@@ -133,18 +133,38 @@ class WhetRejections extends WhetBase {
     var section = document.getElementById('rej-patterns-section');
     var el = document.getElementById('rej-patterns-list');
     if (!patternsData || patternsData.length === 0) {
-      section.style.display = 'none';
+      section.style.display = '';
+      el.innerHTML = '<div class="wh-empty">No recurring patterns detected right now.</div>';
       return;
     }
     section.style.display = '';
     var html = '';
     for (var i = 0; i < patternsData.length; i++) {
       var p = patternsData[i];
-      html += '<div class="bg-gradient-to-br from-orange/10 to-orange/5 border border-orange rounded-lg py-4 px-5 mb-3 flex items-center gap-4">';
+
+      // Velocity indicator
+      var velocityHtml = '';
+      if (p.velocity >= 3) velocityHtml = ' \\u00B7 <span class="text-red font-semibold">\\u26A1 accelerating rapidly</span>';
+      else if (p.velocity >= 1.5) velocityHtml = ' \\u00B7 <span class="text-yellow font-semibold">\\u2191 accelerating</span>';
+
+      html += '<div class="bg-gradient-to-br from-orange/10 to-orange/5 border border-orange rounded-lg py-4 px-5 mb-3">';
+      html += '<div class="flex items-center gap-4">';
       html += '<div class="bg-orange text-surface rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm shrink-0 shadow-[0_0_8px_rgba(240,136,62,0.3)]">' + p.count + '</div>';
-      html += '<div><div class="text-[13px] text-primary">' + esc(p.theme) + '</div>';
-      html += '<div class="text-[11px] text-muted mt-1">' + esc(p.domain) + ' \\u00B7 ' + p.count + ' similar rejections \\u00B7 ' + (p.sample_ids ? p.sample_ids.length : 0) + ' samples</div>';
+      html += '<div class="flex-1"><div class="text-[13px] text-primary">' + esc(p.theme) + '</div>';
+      html += '<div class="text-[11px] text-muted mt-1">' + esc(p.domain) + ' \\u00B7 ' + p.count + ' similar rejections' + velocityHtml + '</div>';
       html += '</div></div>';
+
+      // Suggested constraint
+      if (p.suggested_constraint) {
+        var sc = p.suggested_constraint;
+        html += '<div class="mt-3 pt-3 border-t border-orange/20 text-[12px]">';
+        html += '<span class="text-accent font-mono">Suggested:</span> ';
+        html += '<span class="text-primary font-medium">' + esc(sc.title) + '</span>';
+        html += ' <span class="text-muted">\\u2014 ' + esc(sc.category) + '</span>';
+        html += '</div>';
+      }
+
+      html += '</div>';
     }
     el.innerHTML = html;
   }

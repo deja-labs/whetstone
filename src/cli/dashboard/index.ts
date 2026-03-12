@@ -162,6 +162,391 @@ function modalField(label, value, opts) {
   return '<div class="wh-modal-field"><div class="wh-field-label">' + esc(label) + '</div>' + val + '</div>';
 }
 
+var FIELD_OPTIONS = {
+  severity: ['critical', 'important', 'preference'],
+  status: ['active', 'superseded', 'deprecated'],
+  category: ['code-quality', 'pattern', 'business-logic', 'framing', 'reasoning', 'editorial']
+};
+
+function editableField(entityId, fieldName, label, value, opts) {
+  opts = opts || {};
+  var entity = opts.entity || 'rejection';
+  var displayVal;
+  if (!value) {
+    displayVal = '<span class="empty">\\u2014</span>';
+  } else if (fieldName === 'domain') {
+    displayVal = domainBadge(value);
+  } else if (fieldName === 'severity') {
+    displayVal = severityBadge(value);
+  } else if (fieldName === 'status' || fieldName === 'category') {
+    displayVal = '<span class="wh-badge">' + esc(value) + '</span>';
+  } else if (fieldName === 'tags') {
+    var tagArr = value ? value.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+    if (tagArr.length > 0) {
+      displayVal = '<div class="wh-flex-wrap">';
+      for (var ti = 0; ti < tagArr.length; ti++) displayVal += '<span class="wh-tag">' + esc(tagArr[ti]) + '</span>';
+      displayVal += '</div>';
+    } else {
+      displayVal = '<span class="empty">\\u2014</span>';
+    }
+  } else if (opts.code) {
+    displayVal = '<code>' + esc(value) + '</code>';
+  } else {
+    displayVal = esc(value);
+  }
+  var dataVal = value ? value.replace(/&/g,'&amp;').replace(/"/g,'&quot;') : '';
+  var tag = (opts.code || fieldName === 'reasoning') ? 'textarea' : 'input';
+  var codeAttr = opts.code ? ' data-code="true"' : '';
+  return '<div class="wh-modal-field">' +
+    '<div class="wh-field-label">' + esc(label) + '</div>' +
+    '<div class="wh-field-value wh-field-editable" data-field="' + fieldName + '" data-id="' + entityId + '" data-entity="' + entity + '" data-tag="' + tag + '"' + codeAttr + ' data-value="' + dataVal + '" onclick="startEdit(this)">' +
+    displayVal + '</div></div>';
+}
+
+function startEdit(el) {
+  if (el.querySelector('input, textarea, select')) return;
+  var field = el.dataset.field;
+  var id = el.dataset.id;
+  var tag = el.dataset.tag;
+  var value = el.dataset.value;
+
+  if (field === 'domain') { startDomainEdit(el, id, value); return; }
+  if (field === 'tags') { startTagsEdit(el, id, value); return; }
+  if (FIELD_OPTIONS[field]) { startSelectEdit(el, id, field, value, FIELD_OPTIONS[field]); return; }
+
+  var input;
+  if (tag === 'textarea') {
+    input = document.createElement('textarea');
+    input.rows = 4;
+  } else {
+    input = document.createElement('input');
+    input.type = 'text';
+  }
+  input.className = 'wh-inline-edit' + (el.dataset.code ? ' wh-inline-edit-code' : '');
+  input.value = value;
+  el.textContent = '';
+  el.appendChild(input);
+  input.focus();
+  if (tag !== 'textarea') input.select();
+  input.addEventListener('blur', function() { saveField(el, id, field, input.value); });
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { e.preventDefault(); renderFieldValue(el, value); }
+    if (e.key === 'Enter' && tag !== 'textarea') { e.preventDefault(); input.blur(); }
+  });
+}
+
+function startSelectEdit(el, entityId, field, currentValue, options) {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'wh-domain-edit-wrapper';
+  var select = document.createElement('select');
+  select.className = 'wh-inline-edit';
+  for (var i = 0; i < options.length; i++) {
+    var opt = document.createElement('option');
+    opt.value = options[i];
+    opt.textContent = options[i];
+    if (options[i] === currentValue) opt.selected = true;
+    select.appendChild(opt);
+  }
+  el.textContent = '';
+  wrapper.appendChild(select);
+  el.appendChild(wrapper);
+
+  var choices = new Choices(select, {
+    searchEnabled: false,
+    shouldSort: false,
+    itemSelectText: '',
+  });
+  el._choices = choices;
+
+  select.addEventListener('change', function() {
+    var newVal = select.value;
+    choices.destroy();
+    el._choices = null;
+    if (newVal && newVal !== currentValue) {
+      saveField(el, entityId, field, newVal);
+    } else {
+      renderFieldValue(el, currentValue);
+    }
+  });
+
+  select.addEventListener('hideDropdown', function() {
+    setTimeout(function() {
+      if (el._choices && !el.querySelector('.choices.is-open')) {
+        el._choices.destroy();
+        el._choices = null;
+        renderFieldValue(el, currentValue);
+      }
+    }, 200);
+  });
+
+  choices.showDropdown();
+}
+
+async function startDomainEdit(el, entityId, currentValue) {
+  var wrapper = document.createElement('div');
+  wrapper.className = 'wh-domain-edit-wrapper';
+  var select = document.createElement('select');
+  select.className = 'wh-inline-edit';
+
+  // Fetch existing domains from both rejections and constraints
+  try {
+    var results = await Promise.all([
+      fetchJson('/api/rejections/summary'),
+      fetchJson('/api/constraints/summary')
+    ]);
+    var domainSet = {};
+    var rDomains = (results[0].by_domain || []);
+    var cDomains = (results[1].by_domain || []);
+    for (var i = 0; i < rDomains.length; i++) domainSet[rDomains[i].domain] = true;
+    for (var i = 0; i < cDomains.length; i++) domainSet[cDomains[i].domain] = true;
+    var domains = Object.keys(domainSet).sort();
+    if (currentValue && !domainSet[currentValue]) {
+      domains.unshift(currentValue);
+    }
+    for (var i = 0; i < domains.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = domains[i];
+      opt.textContent = domains[i];
+      if (domains[i] === currentValue) opt.selected = true;
+      select.appendChild(opt);
+    }
+  } catch(e) {
+    var opt = document.createElement('option');
+    opt.value = currentValue;
+    opt.textContent = currentValue;
+    opt.selected = true;
+    select.appendChild(opt);
+  }
+
+  el.textContent = '';
+  wrapper.appendChild(select);
+  el.appendChild(wrapper);
+
+  var choices = new Choices(select, {
+    searchEnabled: true,
+    shouldSort: false,
+    itemSelectText: '',
+    searchPlaceholderValue: 'Type to search or add...',
+    duplicateItemsAllowed: false,
+  });
+  el._choices = choices;
+
+  // Dynamically add the typed value as a selectable choice so clicking works.
+  // On each keystroke, rebuild the full choice list = base domains + optional custom entry.
+  // This avoids stale "Add" entries accumulating from previous keystrokes.
+  var _baseDomains = (domains || []).slice();
+  var _domainLookup = domainSet || {};
+  select.addEventListener('search', function(evt) {
+    var typed = (evt.detail && evt.detail.value || '').trim();
+    var rebuilt = [];
+    if (typed && !_domainLookup[typed]) {
+      rebuilt.push({ value: typed, label: 'Add "' + typed + '"' });
+    }
+    for (var i = 0; i < _baseDomains.length; i++) {
+      rebuilt.push({ value: _baseDomains[i], label: _baseDomains[i] });
+    }
+    choices.clearChoices();
+    choices.setChoices(rebuilt, 'value', 'label', false);
+  });
+
+  select.addEventListener('change', function() {
+    var newVal = select.value;
+    choices.destroy();
+    el._choices = null;
+    if (newVal && newVal !== currentValue) {
+      saveField(el, entityId, 'domain', newVal);
+    } else {
+      renderFieldValue(el, currentValue);
+    }
+  });
+
+  select.addEventListener('hideDropdown', function() {
+    setTimeout(function() {
+      if (el._choices && !el.querySelector('.choices.is-open')) {
+        el._choices.destroy();
+        el._choices = null;
+        renderFieldValue(el, currentValue);
+      }
+    }, 200);
+  });
+
+  choices.showDropdown();
+}
+
+function cleanTag(s) {
+  return s.replace(/[^a-zA-Z0-9\\- ]/g, '').trim().toLowerCase();
+}
+
+function startTagsEdit(el, entityId, currentValue) {
+  var currentTags = currentValue ? currentValue.split(',').map(function(t) { return cleanTag(t); }).filter(Boolean) : [];
+  // Deduplicate initial tags
+  var seen = {};
+  currentTags = currentTags.filter(function(t) { if (seen[t]) return false; seen[t] = true; return true; });
+
+  var container = document.createElement('div');
+  container.className = 'wh-tag-input';
+  el.textContent = '';
+  el.appendChild(container);
+
+  var tags = currentTags.slice();
+
+  function renderTags() {
+    // Remove existing pills but keep the input
+    var pills = container.querySelectorAll('.wh-tag-pill');
+    for (var i = 0; i < pills.length; i++) pills[i].remove();
+    var inp = container.querySelector('.wh-tag-text');
+    for (var i = 0; i < tags.length; i++) {
+      var pill = document.createElement('span');
+      pill.className = 'wh-tag-pill';
+      pill.setAttribute('data-index', String(i));
+      pill.innerHTML = esc(tags[i]) + '<button class="wh-tag-remove" data-index="' + i + '">\\u00D7</button>';
+      container.insertBefore(pill, inp);
+    }
+  }
+
+  function addTag(val) {
+    var cleaned = cleanTag(val);
+    if (!cleaned) return;
+    if (tags.indexOf(cleaned) !== -1) return; // no duplicates
+    tags.push(cleaned);
+    renderTags();
+  }
+
+  function removeTag(index) {
+    tags.splice(index, 1);
+    renderTags();
+    textInput.focus();
+  }
+
+  var textInput = document.createElement('input');
+  textInput.type = 'text';
+  textInput.className = 'wh-tag-text';
+  textInput.placeholder = tags.length === 0 ? 'Type and press Enter to add tags...' : '';
+  container.appendChild(textInput);
+
+  renderTags();
+
+  container.addEventListener('click', function(e) {
+    if (e.target.classList.contains('wh-tag-remove')) {
+      removeTag(parseInt(e.target.dataset.index, 10));
+      return;
+    }
+    textInput.focus();
+  });
+
+  textInput.addEventListener('keydown', function(e) {
+    if ((e.key === 'Enter' || e.key === 'Tab' || e.key === ',') && textInput.value.trim()) {
+      e.preventDefault();
+      addTag(textInput.value);
+      textInput.value = '';
+      textInput.placeholder = '';
+    }
+    if (e.key === 'Backspace' && textInput.value === '' && tags.length > 0) {
+      removeTag(tags.length - 1);
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      cleanup();
+      renderFieldValue(el, currentValue);
+    }
+  });
+
+  // Commit typed text on blur too
+  textInput.addEventListener('input', function() {
+    // Auto-create pill if comma typed
+    if (textInput.value.indexOf(',') !== -1) {
+      var parts = textInput.value.split(',');
+      for (var i = 0; i < parts.length - 1; i++) { addTag(parts[i]); }
+      textInput.value = parts[parts.length - 1];
+    }
+  });
+
+  function cleanup() {
+    document.removeEventListener('mousedown', onDocClick);
+  }
+
+  function saveTags() {
+    // Commit any remaining text
+    if (textInput.value.trim()) { addTag(textInput.value); textInput.value = ''; }
+    cleanup();
+    var newValue = tags.join(', ');
+    if (newValue !== currentValue) {
+      saveField(el, entityId, 'tags', newValue);
+    } else {
+      renderFieldValue(el, currentValue);
+    }
+  }
+
+  function onDocClick(e) {
+    if (!el.contains(e.target)) {
+      saveTags();
+    }
+  }
+  setTimeout(function() {
+    document.addEventListener('mousedown', onDocClick);
+  }, 50);
+
+  textInput.focus();
+}
+
+function renderFieldValue(el, value) {
+  var field = el.dataset.field;
+  var tag = el.dataset.tag;
+  el.dataset.value = value;
+  if (!value) {
+    el.innerHTML = '<span class="empty">\\u2014</span>';
+  } else if (field === 'domain') {
+    el.innerHTML = domainBadge(value);
+  } else if (field === 'severity') {
+    el.innerHTML = severityBadge(value);
+  } else if (field === 'status' || field === 'category') {
+    el.innerHTML = '<span class="wh-badge">' + esc(value) + '</span>';
+  } else if (field === 'tags') {
+    var tagArr = value ? value.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+    if (tagArr.length > 0) {
+      var th = '<div class="wh-flex-wrap">';
+      for (var ti = 0; ti < tagArr.length; ti++) th += '<span class="wh-tag">' + esc(tagArr[ti]) + '</span>';
+      th += '</div>';
+      el.innerHTML = th;
+    } else {
+      el.innerHTML = '<span class="empty">\\u2014</span>';
+    }
+  } else if (el.dataset.code) {
+    el.innerHTML = '<code>' + esc(value) + '</code>';
+  } else {
+    el.textContent = value;
+  }
+}
+
+async function saveField(el, id, field, newValue) {
+  var entity = el.dataset.entity || 'rejection';
+  var oldValue = el.dataset.value;
+  if (newValue === oldValue) { renderFieldValue(el, oldValue); return; }
+  if (field === 'domain' && !newValue.trim()) { renderFieldValue(el, oldValue); return; }
+  if (field === 'title' && !newValue.trim()) { renderFieldValue(el, oldValue); return; }
+  if (field === 'description' && !newValue.trim()) { renderFieldValue(el, oldValue); return; }
+  if (field === 'rule' && !newValue.trim()) { renderFieldValue(el, oldValue); return; }
+  var body = {};
+  if (field === 'tags') {
+    body[field] = newValue ? newValue.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+  } else {
+    body[field] = newValue || null;
+  }
+  var endpoint = entity === 'constraint' ? '/api/constraint/' : '/api/rejection/';
+  try {
+    var res = await fetch(endpoint + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) { var err = await res.json(); alert(err.error || 'Save failed'); renderFieldValue(el, oldValue); return; }
+    renderFieldValue(el, newValue);
+    el.classList.add('wh-field-saved');
+    setTimeout(function() { el.classList.remove('wh-field-saved'); }, 600);
+    refresh();
+  } catch(err) { alert(err.message); renderFieldValue(el, oldValue); }
+}
+
 function closeModal() {
   document.getElementById('modal-overlay').style.display = 'none';
   document.body.style.overflow = '';
@@ -218,10 +603,10 @@ async function openRejection(id) {
     html += '<h2 class="text-base font-semibold text-primary leading-snug">' + esc(r.description) + '</h2></div>';
     html += '<button class="bg-transparent border-none text-muted text-xl cursor-pointer leading-none hover:text-primary hover:bg-raised ml-4 shrink-0 w-8 h-8 flex items-center justify-center rounded-md transition-colors" onclick="closeModal()">\\u00D7</button></div>';
     html += '<div class="p-6 flex flex-col gap-5">';
-    html += '<div class="wh-flex-wrap">' + domainBadge(r.domain) + '</div>';
-    html += modalField('Description', r.description);
-    html += modalField('Reasoning', r.reasoning, { showEmpty: true });
-    html += modalField('Raw Output', r.raw_output, { code: true, showEmpty: true });
+    html += editableField(r.id, 'domain', 'Domain', r.domain);
+    html += editableField(r.id, 'description', 'Description', r.description);
+    html += editableField(r.id, 'reasoning', 'Reasoning', r.reasoning, { showEmpty: true });
+    html += editableField(r.id, 'raw_output', 'Raw Output', r.raw_output, { code: true, showEmpty: true });
     if (r.constraint_id) {
       html += '<div class="wh-modal-field"><div class="wh-field-label">Encoded By</div><div class="wh-field-value flex items-center gap-3"><a href="#" onclick="event.preventDefault();openConstraint(\\'' + esc(r.constraint_id) + '\\')" class="text-accent no-underline font-mono text-xs">' + esc(r.constraint_id) + ' \\u2192 View constraint</a><button onclick="unlinkRejection(\\'' + esc(r.id) + '\\')" class="text-red border border-red/30 bg-glow-red rounded-md text-[11px] px-3 py-1.5 cursor-pointer hover:bg-red hover:text-surface transition-colors">Unlink</button></div></div>';
     } else {
@@ -246,28 +631,29 @@ async function openConstraint(id) {
 
   try {
     var c = await fetchJson('/api/constraint/' + encodeURIComponent(id));
+    var co = { entity: 'constraint' };
     var html = '<div class="flex items-start justify-between px-6 pt-6 pb-5 border-b border-edge sticky top-0 bg-card/95 backdrop-blur-md rounded-t-xl z-10">';
     html += '<div><div class="text-[11px] font-mono text-muted uppercase tracking-widest mb-2">Constraint</div>';
     html += '<h2 class="text-base font-semibold text-primary leading-snug">' + esc(c.title) + '</h2></div>';
     html += '<button class="bg-transparent border-none text-muted text-xl cursor-pointer leading-none hover:text-primary hover:bg-raised ml-4 shrink-0 w-8 h-8 flex items-center justify-center rounded-md transition-colors" onclick="closeModal()">\\u00D7</button></div>';
     html += '<div class="p-6 flex flex-col gap-5">';
-    html += '<div class="wh-flex-wrap">' + domainBadge(c.domain) + severityBadge(c.severity) + '<span class="wh-badge">' + esc(c.category) + '</span><span class="wh-badge">' + esc(c.status) + '</span></div>';
-    html += modalField('Rule', c.rule);
-    html += modalField('Reasoning', c.reasoning, { showEmpty: true });
-    html += modalField('Bad Example', c.rejected_example, { code: true, showEmpty: true });
-    html += modalField('Good Example', c.accepted_example, { code: true, showEmpty: true });
+    html += '<div class="wh-flex-wrap gap-2">';
+    html += editableField(c.id, 'domain', 'Domain', c.domain, co);
+    html += editableField(c.id, 'severity', 'Severity', c.severity, co);
+    html += editableField(c.id, 'category', 'Category', c.category, co);
+    html += editableField(c.id, 'status', 'Status', c.status, co);
+    html += '</div>';
+    html += editableField(c.id, 'title', 'Title', c.title, co);
+    html += editableField(c.id, 'rule', 'Rule', c.rule, co);
+    html += editableField(c.id, 'reasoning', 'Reasoning', c.reasoning, { entity: 'constraint', showEmpty: true });
+    html += editableField(c.id, 'rejected_example', 'Bad Example', c.rejected_example, { entity: 'constraint', code: true, showEmpty: true });
+    html += editableField(c.id, 'accepted_example', 'Good Example', c.accepted_example, { entity: 'constraint', code: true, showEmpty: true });
     // Tags
     var tags = null;
     try { tags = c.tags ? JSON.parse(c.tags) : null; } catch(e) { tags = c.tags ? [c.tags] : null; }
-    if (tags && tags.length > 0) {
-      var tagsHtml = '<div class="wh-flex-wrap">';
-      for (var t = 0; t < tags.length; t++) tagsHtml += '<span class="wh-tag">' + esc(tags[t]) + '</span>';
-      tagsHtml += '</div>';
-      html += '<div class="wh-modal-field"><div class="wh-field-label">Tags</div>' + tagsHtml + '</div>';
-    } else {
-      html += modalField('Tags', null, { showEmpty: true });
-    }
-    html += modalField('Source', c.source, { showEmpty: true });
+    var tagsStr = (tags && tags.length > 0) ? tags.join(', ') : '';
+    html += editableField(c.id, 'tags', 'Tags', tagsStr, { entity: 'constraint', showEmpty: true });
+    html += editableField(c.id, 'source', 'Source', c.source, { entity: 'constraint', showEmpty: true });
     html += '<hr class="border-none border-t border-edge-subtle">';
     html += modalField('Times Applied', String(c.times_applied || 0), { mono: true });
     html += modalField('Last Applied', c.last_applied_at ? formatDate(c.last_applied_at) : null, { mono: true, showEmpty: true });

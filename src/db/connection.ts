@@ -115,8 +115,20 @@ export function getDb(): DatabaseWrapper {
   return db;
 }
 
+/**
+ * Flush WAL contents into the main .db file.
+ * This ensures the .db file (which is committed to git) stays up-to-date,
+ * since the -wal and -shm files are gitignored.
+ */
+export function checkpoint(): void {
+  if (db) {
+    db.pragma("wal_checkpoint(TRUNCATE)");
+  }
+}
+
 export function closeDb(): void {
   if (db) {
+    checkpoint();
     db.close();
     db = null;
   }
