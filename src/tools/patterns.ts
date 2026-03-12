@@ -13,9 +13,10 @@ export interface PatternCluster {
   descriptions: string[];
 }
 
-// ── Tokenization ────────────────────────────────────────────────────
+// ── Stop words ───────────────────────────────────────────────────────
 
 const STOP_WORDS = new Set([
+  // English function words
   "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
   "have", "has", "had", "do", "does", "did", "will", "would", "could",
   "should", "may", "might", "shall", "can", "need", "must",
@@ -29,17 +30,104 @@ const STOP_WORDS = new Set([
   "who", "when", "where", "why", "how", "all", "each", "every", "both",
   "few", "more", "most", "other", "some", "such", "only", "own", "same",
   "don", "used", "using", "use", "instead",
+  // AI/code-review noise — words that appear in almost every rejection
+  "code", "output", "generated", "added", "file", "also", "like",
+  "want", "make", "made", "get", "got", "put", "set", "let",
+  "thing", "things", "way", "still", "already", "something",
 ]);
 
-function tokenize(text: string): Set<string> {
-  const tokens = text
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((t) => t.length > 2 && !STOP_WORDS.has(t));
-  return new Set(tokens);
+// ── Stemming ─────────────────────────────────────────────────────────
+
+// Lightweight suffix stemmer — no dependencies, conservative by design.
+// Uses two rule tiers: long suffixes (safe to strip from any word) and
+// short suffixes (only stripped from words >= 6 chars to avoid over-stemming).
+
+// [pattern, replacement, minWordLength]
+const SUFFIX_RULES: [RegExp, string, number][] = [
+  // Long suffixes — unambiguous, safe on any word
+  [/ational$/, "ate", 0],
+  [/tional$/, "tion", 0],
+  [/fulness$/, "ful", 0],
+  [/ousness$/, "ous", 0],
+  [/iveness$/, "ive", 0],
+  [/ically$/, "ic", 0],
+  [/mentation$/, "ment", 0],
+  [/isation$/, "ise", 0],
+  [/ization$/, "ize", 0],
+  [/ation$/, "", 0],
+  [/ments$/, "ment", 0],
+  [/iness$/, "y", 0],
+  [/ingly$/, "ing", 0],
+  [/ally$/, "al", 0],
+  [/ably$/, "able", 0],
+  // Medium suffixes — require word >= 8 chars
+  [/ness$/, "", 8],
+  [/able$/, "", 8],
+  [/ible$/, "", 8],
+  [/ling$/, "l", 8],
+  // Short suffixes — require word >= 6 chars to avoid mangling short roots
+  [/ies$/, "y", 6],
+  [/ied$/, "y", 6],
+  [/ing$/, "", 6],
+  [/eed$/, "ee", 6],
+  [/ely$/, "e", 6],
+  [/ed$/, "", 6],
+  [/ly$/, "", 6],
+  [/er$/, "", 6],
+  [/es$/, "", 6],
+  [/ss$/, "ss", 0],  // keep "class", "pass" etc — must precede /s$/
+  [/s$/, "", 6],
+];
+
+function stem(word: string): string {
+  if (word.length <= 4) return word;
+
+  let result = word;
+  for (const [suffix, replacement, minLen] of SUFFIX_RULES) {
+    if (word.length >= minLen && suffix.test(result)) {
+      const stemmed = result.replace(suffix, replacement);
+      // Stem must be at least 3 chars and contain a vowel
+      if (stemmed.length >= 3 && /[aeiouy]/.test(stemmed)) {
+        result = stemmed;
+        break;
+      }
+    }
+  }
+
+  // Collapse trailing doubled consonants: "logg" → "log", "runn" → "run"
+  if (result.length >= 4 && result[result.length - 1] === result[result.length - 2]) {
+    const ch = result[result.length - 1];
+    if (!/[aeiou]/.test(ch)) {
+      result = result.slice(0, -1);
+    }
+  }
+
+  return result;
 }
 
-// ── Similarity ──────────────────────────────────────────────────────
+// ── Tokenization ─────────────────────────────────────────────────────
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length > 2 && !STOP_WORDS.has(t))
+    .map(stem);
+}
+
+function tokenizeToSet(text: string): Set<string> {
+  const words = tokenize(text);
+
+  // Add bigrams — captures phrases like "error_handling", "type_check"
+  const tokens = new Set(words);
+  for (let i = 0; i < words.length - 1; i++) {
+    tokens.add(words[i] + "_" + words[i + 1]);
+  }
+
+  return tokens;
+}
+
+// ── Similarity ───────────────────────────────────────────────────────
 
 function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 && b.size === 0) return 0;
@@ -51,7 +139,53 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   return union === 0 ? 0 : intersection / union;
 }
 
-// ── Clustering ──────────────────────────────────────────────────────
+// ── Theme extraction ─────────────────────────────────────────────────
+
+function extractTheme(tokenSets: Set<string>[]): string {
+  if (tokenSets.length === 0) return "(similar rejections)";
+
+  // Count how many members contain each token
+  const freq = new Map<string, number>();
+  for (const s of tokenSets) {
+    for (const token of s) {
+      freq.set(token, (freq.get(token) ?? 0) + 1);
+    }
+  }
+
+  // Tokens present in >50% of cluster members, prefer bigrams
+  const threshold = Math.max(2, Math.ceil(tokenSets.length * 0.5));
+  const candidates: [string, number][] = [];
+  for (const [token, count] of freq) {
+    if (count >= threshold) {
+      // Bigrams score higher — they're more descriptive
+      const score = token.includes("_") ? count * 2 : count;
+      candidates.push([token, score]);
+    }
+  }
+
+  if (candidates.length === 0) {
+    // Fallback: tokens present in all members
+    const shared = [...tokenSets[0]].filter((t) =>
+      tokenSets.every((s) => s.has(t)),
+    );
+    return shared.length > 0
+      ? shared.map(formatToken).join(", ")
+      : "(similar rejections)";
+  }
+
+  // Sort by score descending, take top 5
+  candidates.sort((a, b) => b[1] - a[1]);
+  return candidates
+    .slice(0, 5)
+    .map(([token]) => formatToken(token))
+    .join(", ");
+}
+
+function formatToken(token: string): string {
+  return token.replace(/_/g, " ");
+}
+
+// ── Clustering ───────────────────────────────────────────────────────
 
 interface RejectionRow {
   id: string;
@@ -60,19 +194,19 @@ interface RejectionRow {
   reasoning: string | null;
 }
 
+function rejectionText(item: RejectionRow): string {
+  return item.reasoning
+    ? `${item.description} ${item.reasoning}`
+    : item.description;
+}
+
 function clusterBySimilarity(
   items: RejectionRow[],
   threshold: number,
 ): RejectionRow[][] {
   if (items.length === 0) return [];
 
-  // Tokenize all items (description + reasoning for richer comparison)
-  const tokenSets = items.map((item) => {
-    const text = item.reasoning
-      ? `${item.description} ${item.reasoning}`
-      : item.description;
-    return tokenize(text);
-  });
+  const tokenSets = items.map((item) => tokenizeToSet(rejectionText(item)));
 
   // Union-Find
   const parent = items.map((_, i) => i);
@@ -87,7 +221,6 @@ function clusterBySimilarity(
     parent[find(a)] = find(b);
   }
 
-  // Compare all pairs, union those above threshold
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
       if (jaccardSimilarity(tokenSets[i], tokenSets[j]) >= threshold) {
@@ -96,7 +229,6 @@ function clusterBySimilarity(
     }
   }
 
-  // Group by root
   const groups = new Map<number, RejectionRow[]>();
   for (let i = 0; i < items.length; i++) {
     const root = find(i);
@@ -108,7 +240,7 @@ function clusterBySimilarity(
   return Array.from(groups.values());
 }
 
-// ── Main ────────────────────────────────────────────────────────────
+// ── Main ─────────────────────────────────────────────────────────────
 
 export function patterns(input: PatternsInput): PatternCluster[] {
   const db = getDb();
@@ -145,16 +277,10 @@ export function patterns(input: PatternsInput): PatternCluster[] {
     for (const cluster of clusters) {
       if (cluster.length < 2) continue;
 
-      // Extract shared tokens as the theme
-      const allTokenSets = cluster.map((item) =>
-        tokenize(item.reasoning ? `${item.description} ${item.reasoning}` : item.description),
+      const tokenSets = cluster.map((item) =>
+        tokenizeToSet(rejectionText(item)),
       );
-      const shared = [...allTokenSets[0]].filter((token) =>
-        allTokenSets.every((s) => s.has(token)),
-      );
-      const theme = shared.length > 0
-        ? shared.join(", ")
-        : "(similar rejections)";
+      const theme = extractTheme(tokenSets);
 
       results.push({
         domain,
