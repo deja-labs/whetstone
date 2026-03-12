@@ -31,7 +31,7 @@ Raw ideas for Whetstone improvements. Graduate to a story file in `stories/` whe
 
 ## Infrastructure
 
-- [ ] `WHET-0008` WebSocket support for real-time dashboard updates instead of polling
+
 - [ ] `WHET-0009` Database backup command
 - [ ] `WHET-0010` Import constraints from another project's whetstone database
 - [ ] Add API response caching with ETag/If-None-Match
@@ -43,3 +43,4 @@ Raw ideas for Whetstone improvements. Graduate to a story file in `stories/` whe
 - [x] `WHET-0003` (2026-03-12) Stats cards clickable for cross-navigation and filter toggling
 - [x] `WHET-0002` (2026-03-12) Link rejection to constraint from rejection modal
 - [x] `WHET-0007` (2026-03-12) AI-generated changelog via Claude API during releases
+- [x] `WHET-0008` (2026-03-12) WebSocket support for real-time dashboard updates

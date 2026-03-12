@@ -1,5 +1,5 @@
-// <whet-nav> — Header navigation with tabs, status, and refresh controls.
-// Dispatches events: page-change, manual-refresh, toggle-refresh
+// <whet-nav> — Header navigation with tabs and connection status.
+// Dispatches events: page-change, manual-refresh
 // Responsive: collapses to hamburger menu below md (768px).
 
 export const NAV = `
@@ -8,7 +8,6 @@ class WhetNav extends WhetBase {
     return {
       currentPage: { type: String, attribute: 'current-page' },
       status: { type: String },
-      autoRefresh: { type: Boolean, attribute: 'auto-refresh' },
     };
   }
 
@@ -16,7 +15,6 @@ class WhetNav extends WhetBase {
     super();
     this.currentPage = 'overview';
     this.status = 'Loading...';
-    this.autoRefresh = true;
     this._menuOpen = false;
   }
 
@@ -60,27 +58,7 @@ class WhetNav extends WhetBase {
     var controls = document.createElement('div');
     controls.className = 'hidden md:flex items-center gap-3 justify-end';
 
-    var statusSpan = document.createElement('span');
-    statusSpan.className = 'text-xs text-muted font-mono';
-    statusSpan.textContent = this.status;
-    controls.appendChild(statusSpan);
-
-    var refreshBtn = document.createElement('button');
-    refreshBtn.className = 'hidden lg:inline-flex bg-raised text-primary border border-edge rounded-md py-2 px-3 text-xs cursor-pointer font-sans hover:bg-card hover:border-edge-hover transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-accent/30';
-    refreshBtn.textContent = 'Refresh';
-    refreshBtn.addEventListener('click', function() {
-      self.dispatchEvent(new CustomEvent('manual-refresh', { bubbles: true }));
-    });
-    controls.appendChild(refreshBtn);
-
-    var autoBtn = document.createElement('button');
-    autoBtn.textContent = 'Auto: ' + (this.autoRefresh ? 'ON' : 'OFF');
-    autoBtn.className = 'hidden lg:inline-flex bg-raised text-primary border border-edge rounded-md py-2 px-3 text-xs cursor-pointer font-sans hover:bg-card hover:border-edge-hover transition-all duration-150 focus:outline-none focus:ring-1 focus:ring-accent/30' +
-      (this.autoRefresh ? ' !border-accent !text-accent !bg-glow-accent' : '');
-    autoBtn.addEventListener('click', function() {
-      self.dispatchEvent(new CustomEvent('toggle-refresh', { bubbles: true }));
-    });
-    controls.appendChild(autoBtn);
+    controls.appendChild(self._renderStatus());
 
     header.appendChild(controls);
 
@@ -88,10 +66,7 @@ class WhetNav extends WhetBase {
     var mobileRight = document.createElement('div');
     mobileRight.className = 'flex md:hidden items-center gap-3';
 
-    var mobileStatus = document.createElement('span');
-    mobileStatus.className = 'text-xs text-muted font-mono';
-    mobileStatus.textContent = this.status;
-    mobileRight.appendChild(mobileStatus);
+    mobileRight.appendChild(self._renderStatus());
 
     var hamburger = document.createElement('button');
     hamburger.className = 'border-none bg-transparent text-muted text-2xl cursor-pointer p-1 rounded-md hover:text-primary hover:bg-raised transition-colors leading-none';
@@ -127,6 +102,27 @@ class WhetNav extends WhetBase {
 
       this.appendChild(dropdown);
     }
+  }
+
+  _renderStatus() {
+    var isLive = this.status === 'Live';
+    var container = document.createElement('span');
+    container.className = 'inline-flex items-center gap-1.5 text-xs font-mono cursor-pointer';
+    container.addEventListener('click', function() {
+      // Manual refresh on click
+      this.dispatchEvent(new CustomEvent('manual-refresh', { bubbles: true }));
+    }.bind(this));
+
+    var dot = document.createElement('span');
+    dot.className = 'inline-block w-2 h-2 rounded-full ' + (isLive ? 'bg-green shadow-[0_0_6px_rgba(34,197,94,0.5)]' : 'bg-red shadow-[0_0_6px_rgba(239,68,68,0.4)]');
+    container.appendChild(dot);
+
+    var text = document.createElement('span');
+    text.className = isLive ? 'text-green' : 'text-red';
+    text.textContent = isLive ? 'Live' : 'Offline';
+    container.appendChild(text);
+
+    return container;
   }
 }
 customElements.define('whet-nav', WhetNav);

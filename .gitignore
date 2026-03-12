@@ -5,3 +5,5 @@ dist/
 # SQLite WAL files (transient, recreated automatically)
 *.db-wal
 *.db-shm
+# Dashboard signal file (transient, used for real-time update notifications)
+.whetstone/.signal
