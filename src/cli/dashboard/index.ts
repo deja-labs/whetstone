@@ -70,7 +70,7 @@ const BODY = `
 <whet-app></whet-app>
 
 <template id="app-template">
-<whet-nav current-page="overview" status="Loading..." auto-refresh></whet-nav>
+<whet-nav current-page="overview" status="Loading..."></whet-nav>
 
 <whet-overview id="page-overview" class="page"></whet-overview>
 <whet-rejections id="page-rejections" class="page" style="display:none"></whet-rejections>

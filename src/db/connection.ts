@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import type { Database as DatabaseType, Statement } from "better-sqlite3";
-import { mkdirSync, existsSync, statSync, unlinkSync } from "fs";
+import { mkdirSync, existsSync, statSync, unlinkSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
 import { runMigrations } from "./migrations.js";
 
@@ -8,6 +8,18 @@ import { runMigrations } from "./migrations.js";
 
 interface RunResult {
   changes: number;
+}
+
+/**
+ * Touch .whetstone/.signal to notify the dashboard of database changes.
+ * The dashboard watches this file via fs.watch for real-time updates.
+ */
+function touchSignal(): void {
+  if (!resolvedDbPath) return;
+  try {
+    const signalPath = resolve(dirname(resolvedDbPath), ".signal");
+    writeFileSync(signalPath, String(Date.now()));
+  } catch { /* best effort */ }
 }
 
 class PreparedStatement {
@@ -19,6 +31,7 @@ class PreparedStatement {
 
   run(...params: unknown[]): RunResult {
     const result = this.stmt.run(...params);
+    if (result.changes > 0) touchSignal();
     return { changes: result.changes };
   }
 

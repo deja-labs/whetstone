@@ -1,6 +1,9 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "http";
 import { exec } from "child_process";
 import { platform } from "os";
+import { resolve, dirname } from "path";
+import { watch, type FSWatcher } from "fs";
+import { WebSocketServer, WebSocket } from "ws";
 import { getDashboardHtml } from "./dashboard/index.js";
 
 const DEFAULT_PORT = 1337;
@@ -277,6 +280,50 @@ export async function runDashboard(args: string[]): Promise<void> {
     }
   });
 
+  // WebSocket server for real-time updates
+  const wss = new WebSocketServer({ noServer: true });
+  const clients = new Set<WebSocket>();
+
+  wss.on("connection", (ws) => {
+    clients.add(ws);
+    ws.on("close", () => clients.delete(ws));
+    ws.on("error", () => clients.delete(ws));
+  });
+
+  server.on("upgrade", (req, socket, head) => {
+    if (req.url === "/ws") {
+      wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws, req));
+    } else {
+      socket.destroy();
+    }
+  });
+
+  function broadcast() {
+    // Close the cached connection so the next API request opens a fresh one
+    // that sees external writes (WAL snapshot advances on new connection)
+    closeDb();
+    const msg = JSON.stringify({ type: "refresh" });
+    for (const ws of clients) {
+      if (ws.readyState === WebSocket.OPEN) ws.send(msg);
+    }
+  }
+
+  // Watch the .whetstone/.signal file for changes.
+  // Every write operation (CLI, MCP, dashboard API) touches this file,
+  // giving us a reliable cross-process notification without fighting
+  // SQLite's WAL caching or filesystem mtime quirks.
+  const dbPath = resolve(process.env.WHETSTONE_DB || ".whetstone/whetstone.db");
+  const signalPath = resolve(dirname(dbPath), ".signal");
+  let signalDebounce: ReturnType<typeof setTimeout> | null = null;
+  let signalWatcher: FSWatcher | null = null;
+  try {
+    signalWatcher = watch(signalPath, () => {
+      if (signalDebounce) clearTimeout(signalDebounce);
+      signalDebounce = setTimeout(broadcast, 100);
+    });
+    signalWatcher.on("error", () => {});
+  } catch { /* signal file may not exist yet */ }
+
   server.on("error", (err: NodeJS.ErrnoException) => {
     if (err.code === "EADDRINUSE") {
       console.error(`Error: port ${port} is already in use. Try: whetstone dashboard --port <number>`);
@@ -294,6 +341,10 @@ export async function runDashboard(args: string[]): Promise<void> {
 
   process.on("SIGINT", () => {
     console.error("\n  Shutting down...");
+    if (signalWatcher) signalWatcher.close();
+    if (signalDebounce) clearTimeout(signalDebounce);
+    for (const ws of clients) ws.close();
+    wss.close();
     server.close();
     closeDb();
     process.exit(0);

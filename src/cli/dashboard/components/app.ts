@@ -1,5 +1,5 @@
 // <whet-app> — Top-level application shell.
-// Owns routing, auto-refresh timer, and page switching.
+// Owns routing, WebSocket connection, and page switching.
 // Renders <whet-nav> + page components + modal overlay.
 // Delegates data fetching to page components via load().
 // Exposes global functions for backward compat with onclick handlers.
@@ -9,8 +9,8 @@ class WhetApp extends WhetBase {
   connectedCallback() {
     super.connectedCallback();
     this.currentPage = 'overview';
-    this._autoRefresh = true;
     this._refreshTimer = null;
+    this._ws = null;
 
     // Render the shell DOM (one-time setup)
     this.innerHTML = document.getElementById('app-template').innerHTML;
@@ -20,13 +20,11 @@ class WhetApp extends WhetBase {
     var self = this;
     nav.addEventListener('page-change', function(e) { self.switchPage(e.detail); });
     nav.addEventListener('manual-refresh', function() { self.refresh(); });
-    nav.addEventListener('toggle-refresh', function() { self.toggleAuto(); });
 
     // Expose globally for onclick handlers still in vanilla JS
     window.app = self;
     window.switchPage = function(p) { self.switchPage(p); };
     window.refresh = function() { self.refresh(); };
-    window.toggleAuto = function() { self.toggleAuto(); };
 
     // Hash routing
     if (window.location.hash === '#constraints') {
@@ -36,12 +34,49 @@ class WhetApp extends WhetBase {
     } else {
       this.refresh();
     }
-    this.startAutoRefresh();
+    this._connectWs();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     if (this._refreshTimer) clearInterval(this._refreshTimer);
+    if (this._ws) { this._ws.close(); this._ws = null; }
+  }
+
+  _connectWs() {
+    var self = this;
+    var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    var ws = new WebSocket(proto + '//' + location.host + '/ws');
+    self._ws = ws;
+
+    ws.onopen = function() {
+      if (self._refreshTimer) { clearInterval(self._refreshTimer); self._refreshTimer = null; }
+      var nav = self.querySelector('whet-nav');
+      if (nav) nav.status = 'Live';
+    };
+
+    ws.onmessage = function(evt) {
+      try {
+        var msg = JSON.parse(evt.data);
+        if (msg.type === 'refresh') {
+          self.refresh();
+        }
+      } catch(e) {}
+    };
+
+    ws.onclose = function() {
+      self._ws = null;
+      var nav = self.querySelector('whet-nav');
+      if (nav) nav.status = 'Offline';
+      // Fall back to polling
+      if (!self._refreshTimer) {
+        self._refreshTimer = setInterval(function() { self.refresh(); }, 10000);
+      }
+      // Reconnect after delay
+      setTimeout(function() { self._connectWs(); }, 3000);
+    };
+
+    ws.onerror = function() { ws.close(); };
   }
 
   switchPage(page) {
@@ -62,34 +97,17 @@ class WhetApp extends WhetBase {
   }
 
   async refresh() {
-    var nav = this.querySelector('whet-nav');
-    nav.status = 'Refreshing...';
     try {
       var pageEl = this.querySelector('#page-' + this.currentPage);
       if (pageEl && pageEl.load) {
         await pageEl.load();
       }
-      nav.status = 'Updated ' + new Date().toLocaleTimeString();
+      var nav = this.querySelector('whet-nav');
+      nav.status = (this._ws && this._ws.readyState === WebSocket.OPEN) ? 'Live' : 'Offline';
     } catch (err) {
-      nav.status = 'Error: ' + err.message;
+      var nav = this.querySelector('whet-nav');
+      nav.status = 'Offline';
     }
-  }
-
-  toggleAuto() {
-    this._autoRefresh = !this._autoRefresh;
-    var nav = this.querySelector('whet-nav');
-    nav.autoRefresh = this._autoRefresh;
-    if (this._autoRefresh) {
-      this.startAutoRefresh();
-    } else {
-      if (this._refreshTimer) { clearInterval(this._refreshTimer); this._refreshTimer = null; }
-    }
-  }
-
-  startAutoRefresh() {
-    var self = this;
-    if (this._refreshTimer) clearInterval(this._refreshTimer);
-    this._refreshTimer = setInterval(function() { self.refresh(); }, 10000);
   }
 }
 customElements.define('whet-app', WhetApp);
