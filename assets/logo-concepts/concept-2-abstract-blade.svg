@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Concept 2: Abstract Blade / Sharp Edge -->
+  <!-- Primary blade shape - a sharp angular form -->
+  <polygon points="8,52 32,8 36,8 12,52" fill="#F59E0B"/>
+  <!-- Secondary blade - parallel, slightly offset for depth -->
+  <polygon points="28,52 52,8 56,8 32,52" fill="#D97706"/>
+  <!-- Spark/edge highlight where blades meet -->
+  <circle cx="32" cy="30" r="2.5" fill="#FBBF24" opacity="0.8"/>
+  <line x1="28" y1="26" x2="36" y2="34" stroke="#FDE68A" stroke-width="1" opacity="0.5"/>
+  <line x1="36" y1="26" x2="28" y2="34" stroke="#FDE68A" stroke-width="1" opacity="0.5"/>
+</svg>

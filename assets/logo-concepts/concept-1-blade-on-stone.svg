@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Concept 1: Blade on Stone -->
+  <!-- Sharpening stone base -->
+  <rect x="8" y="36" width="48" height="16" rx="4" ry="4" fill="#6B7280" opacity="0.85"/>
+  <!-- Stone surface highlight -->
+  <rect x="10" y="38" width="44" height="4" rx="2" fill="#9CA3AF" opacity="0.4"/>
+  <!-- Blade - angled across the stone -->
+  <polygon points="14,40 52,16 56,20 18,44" fill="#F59E0B"/>
+  <!-- Blade edge highlight -->
+  <line x1="14" y1="40" x2="52" y2="16" stroke="#FBBF24" stroke-width="1.5" opacity="0.6"/>
+  <!-- Blade spine -->
+  <line x1="18" y1="44" x2="56" y2="20" stroke="#D97706" stroke-width="0.75"/>
+</svg>

@@ -9,6 +9,7 @@ import { OVERVIEW } from "./components/overview.js";
 import { CONSTRAINTS } from "./components/constraints.js";
 import { REJECTIONS } from "./components/rejections.js";
 import { APP } from "./components/app.js";
+import { FAVICON_ICO_B64, APPLE_TOUCH_ICON_B64 } from "./favicon.js";
 
 const LIT_CDN = "https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js";
 const TAILWIND_CDN = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4";
@@ -41,6 +42,8 @@ export function getDashboardHtml(version: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Whetstone Dashboard</title>
+<link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,${FAVICON_ICO_B64}">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,${APPLE_TOUCH_ICON_B64}">
 <script src="${TAILWIND_CDN}"></script>
 <link rel="stylesheet" href="${CHOICES_CSS_CDN}">
 <script src="${CHOICES_JS_CDN}"></script>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Concept 3: Monogram W with blade edge -->
+  <!-- W shape formed by sharp blade-like strokes -->
+  <!-- The W has sharp pointed bottoms like blade tips -->
+  <polygon points="6,14 16,54 28,26 32,36 36,26 48,54 58,14 52,14 44,44 36,18 32,28 28,18 20,44 12,14" fill="#F59E0B"/>
+  <!-- Edge highlight on the sharp points -->
+  <line x1="16" y1="54" x2="20" y2="44" stroke="#FBBF24" stroke-width="1.5" opacity="0.6"/>
+  <line x1="48" y1="54" x2="44" y2="44" stroke="#FBBF24" stroke-width="1.5" opacity="0.6"/>
+  <!-- Center peak accent -->
+  <line x1="32" y1="36" x2="32" y2="28" stroke="#FDE68A" stroke-width="1" opacity="0.5"/>
+</svg>

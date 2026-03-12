@@ -2,6 +2,8 @@
 // Dispatches events: page-change, manual-refresh
 // Responsive: collapses to hamburger menu below md (768px).
 
+import { LOGO_SVG_INLINE } from "../favicon.js";
+
 export const NAV = `
 class WhetNav extends WhetBase {
   static get properties() {
@@ -32,8 +34,8 @@ class WhetNav extends WhetBase {
 
     // Logo
     var h1 = document.createElement('h1');
-    h1.className = 'text-lg font-bold text-primary tracking-tight';
-    h1.innerHTML = 'Whetstone <span class="text-muted font-normal text-xs ml-2 uppercase tracking-widest">Dashboard</span>';
+    h1.className = 'text-lg font-bold text-primary tracking-tight flex items-center gap-2';
+    h1.innerHTML = '${LOGO_SVG_INLINE} Whetstone <span class="text-muted font-normal text-xs ml-2 uppercase tracking-widest">Dashboard</span>';
     header.appendChild(h1);
 
     // Nav tabs (hidden on mobile, shown desktop)
