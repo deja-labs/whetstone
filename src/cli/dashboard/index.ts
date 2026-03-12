@@ -623,14 +623,16 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
 
-// Global delegated click handler for domain badge drilldowns
+// Global delegated click handler for domain badge drilldowns.
+// Uses capture phase so it fires BEFORE parent inline onclick handlers.
 document.addEventListener('click', function(e) {
   var badge = e.target.closest('[data-drill-domain]');
   if (badge) {
-    e.stopPropagation();
+    e.stopImmediatePropagation();
+    e.preventDefault();
     navigateWithFilters('rejections', { domain: badge.getAttribute('data-drill-domain') });
   }
-});
+}, true);
 
 async function unlinkRejection(rejectionId) {
   if (!confirm('Unlink this rejection from its constraint?')) return;
