@@ -2,6 +2,10 @@
 
 Raw ideas for Whetstone improvements. Graduate to a story file in `stories/` when ready to pursue. When an idea is done (graduated or dropped), check the box and move it to the **Done** section at the bottom.
 
+## Branding
+
+- [ ] `WHET-0013` Create favicon and logo — design a simple, recognizable mark for Whetstone (sharpening stone / blade motif). Produce favicon.ico (16×16, 32×32, 48×48), apple-touch-icon (180×180), SVG logo for dashboard header, and a square social/repo image (1280×640). Serve favicon from dashboard HTTP server. Add logo to dashboard header next to "Whetstone" title.
+
 ## Dashboard
 
 - [ ] `WHET-0004` Add pagination or infinite scroll to rejection and constraint lists (currently loads all at once)
