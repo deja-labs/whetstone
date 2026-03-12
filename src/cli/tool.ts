@@ -146,6 +146,7 @@ export async function runTool(command: string, args: string[]): Promise<void> {
           domain: flags.get("domain"),
           since: flags.get("since"),
           include_encoded: flags.get("include-encoded") === "true",
+          suggest_constraints: flags.get("suggest-constraints") === "true",
         });
         console.log(formatPatternsResult(result));
         break;

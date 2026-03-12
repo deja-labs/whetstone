@@ -215,6 +215,7 @@ async function startServer(): Promise<void> {
       domain: z.string().optional().describe("Filter by domain"),
       since: z.string().optional().describe("ISO date — only look at rejections since this date (default: last 30 days)"),
       include_encoded: z.boolean().optional().describe("Also include encoded rejections to detect 'leaky' constraints — constraints that aren't preventing recurring rejections"),
+      suggest_constraints: z.boolean().optional().describe("Generate a suggested constraint draft for each pattern cluster — includes title, rule, category, and severity"),
     },
     async (input) => {
       const { patterns } = await import("./tools/patterns.js");

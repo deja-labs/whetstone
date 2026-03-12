@@ -4,6 +4,14 @@ export interface PatternsInput {
   domain?: string;
   since?: string;
   include_encoded?: boolean;
+  suggest_constraints?: boolean;
+}
+
+export interface SuggestedConstraint {
+  title: string;
+  rule: string;
+  category: string;
+  severity: string;
 }
 
 export interface PatternCluster {
@@ -15,6 +23,7 @@ export interface PatternCluster {
   velocity: number;          // ratio of recent vs older rejection frequency (>1 = accelerating)
   leaky_constraint_id?: string;  // if set, these encoded rejections keep recurring despite this constraint
   leaky_constraint_title?: string;
+  suggested_constraint?: SuggestedConstraint;
 }
 
 // ── Stop words ───────────────────────────────────────────────────────
@@ -404,6 +413,72 @@ function findLeakyConstraints(
   return row ? { constraint_id: maxId, title: row.title } : undefined;
 }
 
+// ── Suggested constraint drafts ─────────────────────────────────────
+
+// Category keywords — map common token stems to constraint categories
+const CATEGORY_SIGNALS: Record<string, string[]> = {
+  "code-quality": ["error", "handl", "log", "test", "type", "valid", "format", "lint", "style", "naming", "refactor", "clean", "import", "export", "depend"],
+  "pattern": ["pattern", "struct", "architect", "design", "abstraction", "compon", "modul", "layer", "separ", "encapsul", "interfac", "implement"],
+  "business-logic": ["logic", "business", "requir", "rule", "workflow", "process", "calcul", "permiss", "author", "access", "secur"],
+  "framing": ["explain", "context", "scope", "assum", "clarif", "ambigu", "interpret", "defin", "spec"],
+  "reasoning": ["reason", "why", "justif", "rational", "decis", "tradeoff", "consider", "altern"],
+  "editorial": ["tone", "voice", "word", "phras", "readab", "concis", "verbos", "comment", "document", "messag"],
+};
+
+function inferCategory(themeTokens: string[], descriptions: string[]): string {
+  const allText = [...themeTokens, ...descriptions.map((d) => d.toLowerCase())].join(" ");
+
+  let bestCategory = "pattern";
+  let bestScore = 0;
+
+  for (const [category, signals] of Object.entries(CATEGORY_SIGNALS)) {
+    let score = 0;
+    for (const signal of signals) {
+      if (allText.includes(signal)) score++;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestCategory = category;
+    }
+  }
+
+  return bestCategory;
+}
+
+function inferSeverity(velocity: number, count: number): string {
+  if (velocity >= 3 || count >= 5) return "critical";
+  if (velocity >= 1.5 || count >= 3) return "important";
+  return "preference";
+}
+
+function generateConstraintDraft(
+  theme: string,
+  descriptions: string[],
+  velocity: number,
+  count: number,
+): SuggestedConstraint {
+  // Build title from theme — capitalize and clean up stemmed tokens
+  const themeWords = theme.split(", ").slice(0, 3);
+  const title = themeWords.length > 0
+    ? `Avoid ${themeWords.join(" / ")} issues`
+    : "Address recurring rejection pattern";
+
+  // Build rule from the most common description patterns
+  // Find the shortest description as the most concise summary of the issue
+  const sorted = [...descriptions].sort((a, b) => a.length - b.length);
+  const representative = sorted[0];
+
+  // Construct an imperative rule
+  const rule = descriptions.length === 1
+    ? `Do not ${representative.charAt(0).toLowerCase()}${representative.slice(1).replace(/\.$/, "")}.`
+    : `Do not ${representative.charAt(0).toLowerCase()}${representative.slice(1).replace(/\.$/, "")}. This pattern has occurred ${count} times.`;
+
+  const category = inferCategory(themeWords, descriptions);
+  const severity = inferSeverity(velocity, count);
+
+  return { title, rule, category, severity };
+}
+
 export function patterns(input: PatternsInput): PatternCluster[] {
   const db = getDb();
   const nowMs = Date.now();
@@ -473,6 +548,16 @@ export function patterns(input: PatternsInput): PatternCluster[] {
           result.leaky_constraint_id = leaky.constraint_id;
           result.leaky_constraint_title = leaky.title;
         }
+      }
+
+      // Generate suggested constraint draft
+      if (input.suggest_constraints) {
+        result.suggested_constraint = generateConstraintDraft(
+          theme,
+          result.descriptions,
+          velocity,
+          cluster.length,
+        );
       }
 
       results.push(result);

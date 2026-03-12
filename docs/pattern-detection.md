@@ -118,11 +118,49 @@ When `include_encoded` is set, the pipeline also clusters **encoded** rejections
 
 For each cluster of encoded rejections, the system checks which constraint appears most frequently among the cluster members. If a single constraint accounts for 50% or more of the cluster, it's flagged as leaky. The output includes the constraint ID and title so the user can investigate and strengthen the constraint.
 
-### 8. Output
+### 8. Suggested constraint drafts
+
+When `suggest_constraints` is set, each cluster includes a draft constraint ready for review and creation via the `constrain` tool. The draft is generated entirely from the cluster data — no LLM call required.
+
+**Title** — Built from the top 3 theme tokens: `"Avoid {theme1} / {theme2} / {theme3} issues"`.
+
+**Rule** — Uses the shortest rejection description as the most concise summary, rewritten in imperative voice: `"Do not {description}. This pattern has occurred {count} times."`.
+
+**Category** — Inferred by matching theme tokens and descriptions against keyword signals for each constraint category:
+
+| Category | Signal keywords |
+|----------|----------------|
+| code-quality | error, handl, log, test, type, valid, format, lint, style, naming |
+| pattern | pattern, struct, architect, design, compon, modul, layer |
+| business-logic | logic, business, requir, rule, workflow, permiss, secur |
+| framing | explain, context, scope, assum, clarif, ambigu |
+| reasoning | reason, why, justif, rational, decis, tradeoff |
+| editorial | tone, voice, word, readab, concis, verbos, comment |
+
+Falls back to `"pattern"` if no category scores higher than the others.
+
+**Severity** — Inferred from velocity and count:
+
+| Condition | Severity |
+|-----------|----------|
+| velocity >= 3 or count >= 5 | critical |
+| velocity >= 1.5 or count >= 3 | important |
+| otherwise | preference |
+
+The draft is a starting point — the agent or user should review and refine the title and rule before creating the constraint. The rejection IDs are already available in the cluster for linking.
+
+### 9. Output
 
 Results are sorted by `velocity × count` (urgent accelerating patterns first) and returned as:
 
 ```typescript
+interface SuggestedConstraint {
+  title: string;     // Draft constraint title
+  rule: string;      // Draft constraint rule in imperative voice
+  category: string;  // Inferred category (code-quality, pattern, etc.)
+  severity: string;  // Inferred severity (critical, important, preference)
+}
+
 interface PatternCluster {
   domain: string;              // The domain these rejections belong to
   theme: string;               // Human-readable label (e.g. "error handl, valid")
@@ -132,6 +170,7 @@ interface PatternCluster {
   velocity: number;            // Temporal velocity (>1 = accelerating, <1 = decelerating)
   leaky_constraint_id?: string;   // If set, the constraint that isn't preventing these
   leaky_constraint_title?: string; // Human-readable title of the leaky constraint
+  suggested_constraint?: SuggestedConstraint; // Draft constraint (when suggest_constraints is set)
 }
 ```
 
@@ -142,6 +181,7 @@ interface PatternCluster {
 | `domain` | all | Filter to a specific domain |
 | `since` | 30 days ago | ISO date string, only include rejections after this date |
 | `include_encoded` | false | Also cluster encoded rejections to detect leaky constraints |
+| `suggest_constraints` | false | Generate a suggested constraint draft for each cluster |
 
 Internal constants (not exposed as parameters):
 
@@ -158,9 +198,3 @@ Internal constants (not exposed as parameters):
 ## Complexity
 
 Pairwise comparison is O(n^2) where n is the number of rejections per domain (unencoded only by default, or all when `include_encoded` is set). TF-IDF computation is O(n × v) where v is the vocabulary size. Both are fine for typical workloads (dozens to low hundreds of rejections per domain per month). For very large datasets, a future optimization could use locality-sensitive hashing (LSH) to approximate nearest neighbors.
-
-## Future enhancements
-
-Planned improvements (see Phase 4 in the development roadmap):
-
-- **Suggested constraint drafts** — Auto-generate a constraint title and rule from each cluster

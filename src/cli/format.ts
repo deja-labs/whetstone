@@ -90,7 +90,14 @@ export function formatPatternsResult(patterns: PatternCluster[]): string {
       leakyLabel = `\n    Leaky constraint: "${p.leaky_constraint_title}" (${p.leaky_constraint_id})`;
     }
 
-    return `**${p.domain}** — "${p.theme}" (${p.count} rejections, velocity: ${p.velocity}${velocityLabel}):\n${descs}\n    IDs: ${ids}${leakyLabel}`;
+    // Suggested constraint draft
+    let draftLabel = "";
+    if (p.suggested_constraint) {
+      const sc = p.suggested_constraint;
+      draftLabel = `\n    Suggested constraint:\n      Title: ${sc.title}\n      Rule: ${sc.rule}\n      Category: ${sc.category} | Severity: ${sc.severity}`;
+    }
+
+    return `**${p.domain}** — "${p.theme}" (${p.count} rejections, velocity: ${p.velocity}${velocityLabel}):\n${descs}\n    IDs: ${ids}${leakyLabel}${draftLabel}`;
   });
 
   return `Recurring rejection patterns (sorted by urgency):\n\n${lines.join("\n\n")}`;
