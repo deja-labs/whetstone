@@ -77,6 +77,30 @@ try {
   // Diff too large or failed — proceed without it
 }
 
+// Gather story metadata from backlog for WHET code mapping
+let storyContext = "";
+try {
+  const { readdirSync } = await import("fs");
+  const storyDir = "docs/backlog/stories";
+  if (existsSync(storyDir)) {
+    const stories = readdirSync(storyDir)
+      .filter((f) => f.startsWith("WHET-") && f.endsWith(".md"))
+      .map((f) => {
+        const content = readFileSync(`${storyDir}/${f}`, "utf-8");
+        const idMatch = content.match(/^id:\s*(.+)$/m);
+        const titleMatch = content.match(/^title:\s*(.+)$/m);
+        const id = idMatch ? idMatch[1].trim() : f.replace(".md", "");
+        const title = titleMatch ? titleMatch[1].trim() : "";
+        return `- ${id}: ${title}`;
+      });
+    if (stories.length > 0) {
+      storyContext = `\nHere are the WHET story codes for this project:\n\n${stories.join("\n")}\n`;
+    }
+  }
+} catch {
+  // No stories — proceed without
+}
+
 /**
  * Generate release notes using Claude API
  */
@@ -95,7 +119,7 @@ ${commitMessages}
 Here is the diff stat:
 
 ${diffStat}
-
+${storyContext}
 ${fullDiff ? `Here is the full diff of source changes:\n\n${fullDiff}` : ""}
 
 Write concise, polished release notes. Group changes into these sections (omit empty sections):
@@ -109,6 +133,8 @@ Write concise, polished release notes. Group changes into these sections (omit e
 Rules:
 - Write from the user's perspective — what changed for them, not implementation details
 - Each bullet should be one line, starting with a verb (Add, Fix, Improve, Update, Remove)
+- If a change relates to a WHET story, prefix the bullet with the code in brackets, e.g. "[WHET-0007] Add AI-generated changelog..."
+- Only add a WHET code if there is a clear match — do not force or guess
 - Don't include commit hashes
 - Don't include the version header — I'll add that myself
 - Be concise — aim for 1-2 sentences per bullet maximum
