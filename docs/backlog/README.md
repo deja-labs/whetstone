@@ -39,7 +39,7 @@ Work the story. Update the story file's status as you go: `draft` → `ready` �
 When a story is done:
 
 1. Set its status to `done` and add a `completed` date in the frontmatter
-2. In `IDEAS.md`, check the box (`- [x]`) and move the line to the **Done** section at the bottom with a note (e.g. "graduated to WHET-0003", "dropped — no longer relevant")
+2. In `IDEAS.md`, check the box (`- [x]`) and move the line to the **Done** section at the bottom using the format: `` - [x] `WHET-NNNN` (YYYY-MM-DD) Description ``
 
 ## Story File Template
 
@@ -82,3 +82,4 @@ Any additional context, references, or decisions.
 - Keep IDEAS.md loose — a sentence or two per idea, no formatting requirements beyond checkboxes
 - Ideas with story codes are sorted to the top of their section in IDEAS.md
 - The Done section in IDEAS.md is a flat list — no category grouping needed
+- Done items use the format: `` `WHET-NNNN` (YYYY-MM-DD) Description `` — the date is the completion date from the story frontmatter

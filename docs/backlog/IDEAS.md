@@ -42,4 +42,4 @@ Raw ideas for Whetstone improvements. Graduate to a story file in `stories/` whe
 
 ## Done
 
-- [x] `WHET-0007` AI-generated changelog via Claude API during releases — done
+- [x] `WHET-0007` (2026-03-12) AI-generated changelog via Claude API during releases
