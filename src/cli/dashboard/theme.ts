@@ -293,6 +293,12 @@ body {
 .wh-field-editable:hover {
   @apply border-edge-hover bg-raised/50;
 }
+.wh-field-editable:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
 .wh-field-saved {
   @apply bg-green/10;
   border-color: var(--green) !important;
