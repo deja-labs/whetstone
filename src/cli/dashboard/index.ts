@@ -744,6 +744,17 @@ async function deleteConstraint(constraintId) {
   } catch(err) { alert(err.message); }
 }
 
+async function deleteRejection(rejectionId) {
+  if (!confirm('Permanently delete this rejection? This cannot be undone.')) return;
+  try {
+    var res = await fetch('/api/rejection/' + encodeURIComponent(rejectionId), { method: 'DELETE' });
+    var data = await res.json();
+    if (!res.ok) { alert(data.error || 'Unknown error'); return; }
+    closeModal();
+    refresh();
+  } catch(err) { alert(err.message); }
+}
+
 async function openRejection(id) {
   var overlay = document.getElementById('modal-overlay');
   var content = document.getElementById('modal-content');
@@ -770,6 +781,12 @@ async function openRejection(id) {
     html += '<hr class="border-none border-t border-edge-subtle">';
     html += modalField('ID', r.id, { mono: true });
     html += modalField('Created', formatDate(r.created_at), { mono: true });
+    if (!r.constraint_id) {
+      html += '<div class="text-center py-4 border-t border-edge-subtle">';
+      html += '<button onclick="deleteRejection(\\'' + esc(r.id) + '\\')" class="text-red border border-red/30 bg-glow-red rounded-md text-[13px] py-3 px-5 cursor-pointer hover:bg-red hover:text-surface transition-colors font-medium">Delete Rejection</button>';
+      html += '<div class="text-[11px] text-muted mt-2">Not linked to any constraint \\u2014 safe to delete</div>';
+      html += '</div>';
+    }
     html += '</div>';
     content.innerHTML = html;
   } catch(err) {

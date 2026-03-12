@@ -204,6 +204,16 @@ export async function runDashboard(args: string[]): Promise<void> {
           db.prepare("UPDATE rejections SET constraint_id = ? WHERE id = ?").run(body.constraint_id, id);
           checkpoint();
           sendJson(res, 200, { success: true, rejection_id: id, constraint_id: body.constraint_id });
+        } else if (method === "DELETE" && !parts[1]) {
+          const rejection = db.prepare("SELECT id, constraint_id FROM rejections WHERE id = ?").get(id) as { id: string; constraint_id: string | null } | undefined;
+          if (!rejection) { sendJson(res, 404, { error: "Rejection not found" }); return; }
+          if (rejection.constraint_id) {
+            sendJson(res, 400, { error: "Cannot delete a rejection that is linked to a constraint. Unlink it first." });
+            return;
+          }
+          db.prepare("DELETE FROM rejections WHERE id = ?").run(id);
+          checkpoint();
+          sendJson(res, 200, { success: true, rejection_id: id });
         } else if (method === "PATCH" && !parts[1]) {
           const rejection = db.prepare("SELECT id FROM rejections WHERE id = ?").get(id) as { id: string } | undefined;
           if (!rejection) { sendJson(res, 404, { error: "Rejection not found" }); return; }

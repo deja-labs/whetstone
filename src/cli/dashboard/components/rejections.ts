@@ -205,7 +205,12 @@ class WhetRejections extends WhetBase {
       html += '<div class="wh-flex-wrap">';
       html += domainBadge(r.domain) + ' ' + encodedHtml;
       html += '</div>';
-      html += '<div class="mt-3 pt-3 border-t border-edge-subtle text-[11px] font-mono text-muted">' + timeAgo(r.created_at) + '</div>';
+      html += '<div class="mt-3 pt-3 border-t border-edge-subtle flex items-center justify-between">';
+      html += '<div class="text-[11px] font-mono text-muted">' + timeAgo(r.created_at) + '</div>';
+      if (!r.constraint_id) {
+        html += '<button onclick="event.stopPropagation();deleteRejection(\\'' + esc(r.id) + '\\')" class="text-red/60 hover:text-red border border-transparent hover:border-red/30 rounded text-[11px] px-2 py-1 cursor-pointer transition-colors" title="Delete rejection">\\u2715</button>';
+      }
+      html += '</div>';
       html += '</div>';
     }
     el.innerHTML = html;
