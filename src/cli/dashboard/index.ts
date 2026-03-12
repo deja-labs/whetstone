@@ -110,8 +110,11 @@ function severityBadge(sev) {
   return '<span class="wh-badge wh-badge-' + esc(sev) + '">' + esc(sev) + '</span>';
 }
 
-function domainBadge(domain) {
-  return '<span class="wh-badge">' + esc(domain) + '</span>';
+function domainBadge(domain, clickable) {
+  if (clickable === false) {
+    return '<span class="wh-badge">' + esc(domain) + '</span>';
+  }
+  return '<span class="wh-badge wh-badge-domain" data-drill-domain="' + esc(domain) + '" title="View ' + esc(domain) + ' rejections">' + esc(domain) + '</span>';
 }
 
 function renderStat(value, label, opts) {
@@ -155,10 +158,13 @@ function setFilterValue(elId, value) {
   }
 }
 
+var _lastDrilldownDomain = null;
+
 function navigateWithFilters(page, filters) {
   var app = document.querySelector('whet-app');
   app.switchPage(page);
   filters = filters || {};
+  if (filters.domain) _lastDrilldownDomain = filters.domain;
   setTimeout(function() {
     if (page === 'rejections') {
       if (filters.encoded) setFilterValue('rf-encoded', filters.encoded);
@@ -236,7 +242,7 @@ function editableField(entityId, fieldName, label, value, opts) {
   if (!value) {
     displayVal = '<span class="empty">\\u2014</span>';
   } else if (fieldName === 'domain') {
-    displayVal = domainBadge(value);
+    displayVal = domainBadge(value, false);
   } else if (fieldName === 'severity') {
     displayVal = severityBadge(value);
   } else if (fieldName === 'status' || fieldName === 'category') {
@@ -557,7 +563,7 @@ function renderFieldValue(el, value) {
   if (!value) {
     el.innerHTML = '<span class="empty">\\u2014</span>';
   } else if (field === 'domain') {
-    el.innerHTML = domainBadge(value);
+    el.innerHTML = domainBadge(value, false);
   } else if (field === 'severity') {
     el.innerHTML = severityBadge(value);
   } else if (field === 'status' || field === 'category') {
@@ -616,6 +622,17 @@ function closeModal() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
+
+// Global delegated click handler for domain badge drilldowns.
+// Uses capture phase so it fires BEFORE parent inline onclick handlers.
+document.addEventListener('click', function(e) {
+  var badge = e.target.closest('[data-drill-domain]');
+  if (badge) {
+    e.stopImmediatePropagation();
+    e.preventDefault();
+    navigateWithFilters('rejections', { domain: badge.getAttribute('data-drill-domain') });
+  }
+}, true);
 
 async function unlinkRejection(rejectionId) {
   if (!confirm('Unlink this rejection from its constraint?')) return;

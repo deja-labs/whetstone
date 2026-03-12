@@ -43,7 +43,13 @@ See [Pattern Detection](pattern-detection.md) for how clusters, velocity, and su
 
 A two-column grid:
 
-**Rejections by Domain** — Horizontal stacked bar chart showing encoded (green) vs unencoded (accent) rejections per domain. Bars are proportional to the domain with the most rejections. Includes a legend.
+**Rejections by Domain** — Horizontal stacked bar chart showing encoded (green) vs unencoded (orange) rejections per domain. Bars are proportional to the domain with the most rejections. Includes a legend.
+
+The bar chart is fully interactive:
+
+- **Split click targets** — Clicking the green (encoded) segment navigates to the rejections page filtered by `domain=X&encoded=yes`. Clicking the orange (unencoded) segment filters by `domain=X&encoded=no`.
+- **Hover tooltip** — Hovering any bar row shows a tooltip with the exact encoded count, unencoded count, and total.
+- **Active domain highlight** — After drilling into a domain and returning to the overview, the last-viewed domain row is highlighted with an accent left border and subtle glow.
 
 **Most Applied Constraints** — List of constraints ordered by `times_applied`, showing title, rule, domain, severity, and apply count. Shows 8 by default with an expandable "Show N more" button.
 
@@ -59,7 +65,7 @@ A two-column grid:
 
 Conditional section — hidden if both panels are empty.
 
-**Domain Gaps** — Domains where a significant portion of rejections remain unencoded. Shows a red bar proportional to the gap, plus unencoded count and coverage percentage. Surfaces "taste being lost."
+**Domain Gaps** — Domains where a significant portion of rejections remain unencoded. Shows a red bar proportional to the gap, plus unencoded count and coverage percentage. Surfaces "taste being lost." Each row is clickable — navigates to the rejections page filtered by `domain=X&encoded=no`.
 
 **Ready to Graduate** — Constraints that have been applied frequently enough to be promoted to project docs (CLAUDE.md, steering files). Clickable to open the constraint modal.
 
@@ -68,6 +74,12 @@ Conditional section — hidden if both panels are empty.
 **Fading Constraints** — Constraints that were applied in the past but haven't been used recently. Hidden if none exist. Helps identify constraints that may need updating or deprecation.
 
 **Elevation Candidates** — Frequently applied constraints that could benefit from higher severity or promotion.
+
+## Domain Navigation
+
+Domain badges appear throughout the dashboard on rejection cards, constraint cards, pattern cards, and list items. All domain badges are clickable — clicking one navigates to the rejections page filtered by that domain. Badges show a blue hover state (accent border and color) to indicate clickability.
+
+This makes domain a consistently navigable concept: from any card on any page, clicking the domain badge drills into that domain's rejections. The only exception is domain badges inside edit modals, which remain static since you're already viewing a specific item.
 
 ## Data Loading
 

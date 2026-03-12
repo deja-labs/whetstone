@@ -39,6 +39,7 @@ These fields support click-to-edit. Click the value to enter edit mode, and chan
 ### Actions
 
 - **Unlink** — If the rejection is linked to a constraint, an unlink button appears next to the constraint name. Sends `POST /api/rejection/{id}/unlink` to remove the `constraint_id`.
+- **Delete** — A delete button appears in the modal for unlinked rejections only. Rejections linked to a constraint must be unlinked first. Sends `DELETE /api/rejection/{id}`. Also available as an ✕ button on rejection cards in list views when the rejection is unlinked.
 
 ## Constraint Modal
 
@@ -183,6 +184,12 @@ POST /api/rejection/{id}/unlink
 Removes the `constraint_id` from the rejection.
 
 ### Deleting
+
+```
+DELETE /api/rejection/{id}
+```
+
+Only succeeds if the rejection is not linked to a constraint.
 
 ```
 DELETE /api/constraint/{id}

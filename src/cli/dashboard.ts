@@ -78,7 +78,7 @@ export async function runDashboard(args: string[]): Promise<void> {
     }
 
     try {
-      if (path === "/" || path === "") {
+      if (path === "/" || path === "" || path === "/rejections" || path === "/constraints") {
         sendHtml(res, html);
       } else if (path === "/api/stats") {
         sendJson(res, 200, stats());

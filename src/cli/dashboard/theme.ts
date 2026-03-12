@@ -211,6 +211,15 @@ body {
 .wh-badge-critical { @apply border-red/30 text-red bg-glow-red; }
 .wh-badge-important { @apply border-yellow/30 text-yellow bg-glow-yellow; }
 .wh-badge-preference { @apply border-purple/30 text-purple bg-glow-purple; }
+.wh-badge-domain {
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.wh-badge-domain:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: var(--color-glow-accent);
+}
 
 /* ── Tag ── */
 
@@ -363,6 +372,56 @@ textarea.wh-inline-edit-code {
   transition: width 0.4s ease;
 }
 
+/* ── Clickable bar segments ── */
+
+.bar-segment-click {
+  cursor: pointer;
+  transition: opacity 0.15s, filter 0.15s;
+}
+.bar-segment-click:hover {
+  opacity: 0.8;
+  filter: brightness(1.3);
+}
+
+.bar-row-click {
+  cursor: pointer;
+  transition: background-color 0.15s;
+  border-radius: 6px;
+  padding: 4px 0;
+  margin: -4px 0;
+}
+.bar-row-click:hover {
+  background-color: var(--color-raised);
+}
+
+/* ── Domain bar tooltip ── */
+
+.bar-tooltip {
+  position: absolute;
+  z-index: 50;
+  background: var(--color-card);
+  border: 1px solid var(--color-edge);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--color-primary);
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.bar-tooltip.visible { opacity: 1; }
+
+/* ── Active domain highlight ── */
+
+.domain-bar-active {
+  box-shadow: inset 3px 0 0 var(--color-accent);
+  background: var(--color-glow-accent);
+  border-radius: 0 6px 6px 0;
+}
+
 details summary { list-style: none; }
 details summary::before {
   content: '\\25B6';
@@ -384,7 +443,7 @@ details[open] summary::before { transform: rotate(90deg); }
   vertical-align: middle;
 }
 .bar-legend .legend-encoded::before { background: var(--color-green); }
-.bar-legend .legend-unencoded::before { background: var(--color-accent); }
+.bar-legend .legend-unencoded::before { background: var(--color-orange); }
 
 .pattern-examples div::before {
   content: '\\2022 ';

@@ -22,7 +22,7 @@ class WhetOverview extends WhetBase {
         '<div id="patterns-list"></div>' +
       '</section>' +
       '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
-        '<div class="wh-section"><h2>Rejections by Domain</h2><div id="domain-bars"></div></div>' +
+        '<div class="wh-section"><h2>Rejections by Domain</h2><div id="domain-bars" class="relative"></div></div>' +
         '<div class="wh-section"><h2>Most Applied Constraints</h2><div id="applied-list"></div></div>' +
       '</section>' +
       '<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
@@ -90,22 +90,62 @@ class WhetOverview extends WhetBase {
     }
     var max = Math.max.apply(null, domains.map(function(d) { return d.count; }));
     var html = '<div class="bar-legend flex gap-4 mb-3 text-xs text-muted"><span class="legend-encoded">Encoded</span><span class="legend-unencoded">Unencoded</span></div>';
+    html += '<div id="domain-bar-tooltip" class="bar-tooltip"></div>';
     for (var i = 0; i < domains.length; i++) {
       var d = domains[i];
       var encodedCount = encodedMap[d.domain] || 0;
       var unencodedCount = d.count - encodedCount;
       var encodedPct = max > 0 ? Math.round((encodedCount / max) * 100) : 0;
       var unencodedPct = max > 0 ? Math.round((unencodedCount / max) * 100) : 0;
-      html += '<div class="wh-flex-row mb-3">' +
+      var activeClass = (_lastDrilldownDomain === d.domain) ? ' domain-bar-active' : '';
+      html += '<div class="wh-flex-row mb-3 relative' + activeClass + '" data-domain="' + esc(d.domain) + '" data-encoded="' + encodedCount + '" data-unencoded="' + unencodedCount + '" data-total="' + d.count + '">' +
         '<div class="w-[120px] text-right text-[13px] font-mono text-muted shrink-0">' + esc(d.domain) + '</div>' +
         '<div class="flex-1 h-[22px] bg-raised rounded overflow-hidden flex">' +
-          '<div class="bar-fill-encoded h-full bg-green" style="width:' + encodedPct + '%"></div>' +
-          '<div class="bar-fill-unencoded h-full bg-accent" style="width:' + unencodedPct + '%"></div>' +
+          (encodedPct > 0 ? '<div class="bar-fill-encoded bar-segment-click h-full bg-green" data-filter="yes" style="width:' + encodedPct + '%" title="' + encodedCount + ' encoded"></div>' : '') +
+          (unencodedPct > 0 ? '<div class="bar-fill-unencoded bar-segment-click h-full bg-orange" data-filter="no" style="width:' + unencodedPct + '%" title="' + unencodedCount + ' unencoded"></div>' : '') +
         '</div>' +
         '<div class="w-[60px] text-[13px] font-mono text-muted">' + encodedCount + '/' + d.count + '</div>' +
         '</div>';
     }
     el.innerHTML = html;
+    this._setupBarTooltips(el);
+  }
+
+  _setupBarTooltips(container) {
+    var tooltip = document.getElementById('domain-bar-tooltip');
+    var rows = container.querySelectorAll('[data-domain]');
+    for (var i = 0; i < rows.length; i++) {
+      (function(row) {
+        var domain = row.getAttribute('data-domain');
+        var enc = row.getAttribute('data-encoded');
+        var unenc = row.getAttribute('data-unencoded');
+        var total = row.getAttribute('data-total');
+
+        // Tooltip on row hover
+        row.addEventListener('mouseenter', function() {
+          tooltip.innerHTML = '<strong>' + domain + '</strong> &mdash; ' + enc + ' encoded, ' + unenc + ' unencoded (' + total + ' total)';
+          tooltip.classList.add('visible');
+        });
+        row.addEventListener('mousemove', function(e) {
+          var rect = container.getBoundingClientRect();
+          tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+          tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
+        });
+        row.addEventListener('mouseleave', function() {
+          tooltip.classList.remove('visible');
+        });
+
+        // Click handlers on bar segments
+        var segments = row.querySelectorAll('.bar-segment-click');
+        for (var j = 0; j < segments.length; j++) {
+          (function(seg) {
+            seg.addEventListener('click', function() {
+              navigateWithFilters('rejections', { domain: domain, encoded: seg.getAttribute('data-filter') });
+            });
+          })(segments[j]);
+        }
+      })(rows[i]);
+    }
   }
 
   _renderMostApplied(s) {
@@ -339,7 +379,7 @@ class WhetOverview extends WhetBase {
     for (var i = 0; i < items.length; i++) {
       var d = items[i];
       var gapPct = 100 - d.coverage_pct;
-      html += '<div class="flex items-center gap-3 py-3 border-b border-edge last:border-b-0">' +
+      html += '<div class="flex items-center gap-3 py-3 border-b border-edge last:border-b-0 bar-row-click" data-gap-domain="' + esc(d.domain) + '">' +
         '<div class="w-[120px] font-mono text-[13px] text-primary shrink-0">' + esc(d.domain) + '</div>' +
         '<div class="flex-1 h-2 bg-raised rounded overflow-hidden">' +
           '<div class="gap-bar-fill h-full bg-red rounded" style="width:' + gapPct + '%"></div>' +
@@ -348,6 +388,15 @@ class WhetOverview extends WhetBase {
         '</div>';
     }
     el.innerHTML = html;
+    // Attach click handlers to gap rows
+    var gapRows = el.querySelectorAll('[data-gap-domain]');
+    for (var k = 0; k < gapRows.length; k++) {
+      (function(row) {
+        row.addEventListener('click', function() {
+          navigateWithFilters('rejections', { domain: row.getAttribute('data-gap-domain'), encoded: 'no' });
+        });
+      })(gapRows[k]);
+    }
     this._updateGapsGraduationWrapper();
   }
 

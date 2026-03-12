@@ -26,14 +26,22 @@ class WhetApp extends WhetBase {
     window.switchPage = function(p) { self.switchPage(p); };
     window.refresh = function() { self.refresh(); };
 
-    // Hash routing
-    if (window.location.hash === '#constraints') {
-      this.switchPage('constraints');
-    } else if (window.location.hash === '#rejections') {
-      this.switchPage('rejections');
+    // Path routing
+    var path = window.location.pathname;
+    if (path === '/constraints') {
+      this.switchPage('constraints', true);
+    } else if (path === '/rejections') {
+      this.switchPage('rejections', true);
     } else {
       this.refresh();
     }
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', function() {
+      var p = window.location.pathname;
+      var page = p === '/rejections' ? 'rejections' : p === '/constraints' ? 'constraints' : 'overview';
+      self.switchPage(page, true);
+    });
     this._connectWs();
   }
 
@@ -79,7 +87,7 @@ class WhetApp extends WhetBase {
     ws.onerror = function() { ws.close(); };
   }
 
-  switchPage(page) {
+  switchPage(page, skipPush) {
     this.currentPage = page;
     this.querySelector('#page-overview').style.display = page === 'overview' ? '' : 'none';
     this.querySelector('#page-rejections').style.display = page === 'rejections' ? '' : 'none';
@@ -89,7 +97,10 @@ class WhetApp extends WhetBase {
     var nav = this.querySelector('whet-nav');
     nav.currentPage = page;
 
-    window.location.hash = page === 'overview' ? '' : page;
+    if (!skipPush) {
+      var url = page === 'overview' ? '/' : '/' + page;
+      window.history.pushState({ page: page }, '', url);
+    }
 
     // Delegate to page component
     var pageEl = this.querySelector('#page-' + page);
