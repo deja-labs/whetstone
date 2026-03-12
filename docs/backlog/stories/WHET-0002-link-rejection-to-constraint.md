@@ -1,12 +1,12 @@
 ---
-id: 002
+id: WHET-0002
 title: Link rejection to constraint from rejection modal
 status: ready
 priority: high
 created: 2026-03-12
 ---
 
-# 002: Link rejection to constraint from rejection modal
+# WHET-0002: Link rejection to constraint from rejection modal
 
 ## Problem
 
@@ -26,4 +26,4 @@ Add a "Link to Constraint" action in the rejection modal when the rejection is u
 
 ## Notes
 
-Pairs with story 001 — together they make the full encode-and-link workflow possible from the dashboard.
+Pairs with WHET-0001 — together they make the full encode-and-link workflow possible from the dashboard.

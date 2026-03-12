@@ -1,12 +1,12 @@
 ---
-id: 003
+id: WHET-0003
 title: Make stats cards clickable for cross-navigation
 status: ready
 priority: medium
 created: 2026-03-12
 ---
 
-# 003: Make stats cards clickable for cross-navigation
+# WHET-0003: Make stats cards clickable for cross-navigation
 
 ## Problem
 

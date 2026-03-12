@@ -1,12 +1,12 @@
 ---
-id: 001
+id: WHET-0001
 title: Create constraint directly from pattern suggestion
 status: ready
 priority: high
 created: 2026-03-12
 ---
 
-# 001: Create constraint directly from pattern suggestion
+# WHET-0001: Create constraint directly from pattern suggestion
 
 ## Problem
 

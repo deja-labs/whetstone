@@ -1,12 +1,12 @@
 ---
-id: 004
+id: WHET-0004
 title: Add pagination to rejection and constraint lists
 status: ready
 priority: medium
 created: 2026-03-12
 ---
 
-# 004: Add pagination to rejection and constraint lists
+# WHET-0004: Add pagination to rejection and constraint lists
 
 ## Problem
 

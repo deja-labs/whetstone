@@ -1,12 +1,12 @@
 ---
-id: 006
+id: WHET-0006
 title: Domain health drilldown from overview bars
 status: draft
 priority: low
 created: 2026-03-12
 ---
 
-# 006: Domain health drilldown from overview bars
+# WHET-0006: Domain health drilldown from overview bars
 
 ## Problem
 

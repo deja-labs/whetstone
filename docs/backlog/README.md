@@ -9,8 +9,8 @@ backlog/
   README.md          # this file
   IDEAS.md           # raw idea captures — unrefined, unsorted
   stories/           # one file per graduated story
-    001-*.md
-    002-*.md
+    WHET-0001-*.md
+    WHET-0002-*.md
     ...
 ```
 
@@ -25,7 +25,7 @@ backlog/
 
 ```markdown
 ---
-id: NNN
+id: WHET-NNNN
 title: Short descriptive title
 status: draft | ready | in-progress | done | dropped
 priority: high | medium | low
@@ -33,7 +33,7 @@ created: YYYY-MM-DD
 completed: YYYY-MM-DD
 ---
 
-# NNN: Short descriptive title
+# WHET-NNNN: Short descriptive title
 
 ## Problem
 
@@ -55,8 +55,8 @@ Any additional context, references, or decisions.
 
 ## Conventions
 
-- Story IDs are sequential three-digit numbers: `001`, `002`, etc.
-- File names: `{id}-{kebab-case-title}.md`
+- Story IDs use the format `WHET-NNNN` starting at `WHET-0001`
+- File names: `WHET-{NNNN}-{kebab-case-title}.md`
 - Status flow: `draft` -> `ready` -> `in-progress` -> `done`
 - Stories can be `dropped` if they're no longer relevant
 - Keep IDEAS.md loose — no formatting requirements beyond bullet points

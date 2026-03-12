@@ -1,12 +1,12 @@
 ---
-id: 005
+id: WHET-0005
 title: Add actions for leaky constraint warnings
 status: draft
 priority: medium
 created: 2026-03-12
 ---
 
-# 005: Add actions for leaky constraint warnings
+# WHET-0005: Add actions for leaky constraint warnings
 
 ## Problem
 
