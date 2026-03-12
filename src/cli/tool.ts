@@ -180,5 +180,8 @@ export async function runTool(command: string, args: string[]): Promise<void> {
   } catch (err) {
     console.error(`Error: ${err instanceof Error ? err.message : err}`);
     process.exit(1);
+  } finally {
+    const { closeDb } = await import("../db/connection.js");
+    closeDb();
   }
 }

@@ -50,7 +50,7 @@ async function startServer(): Promise<void> {
   const { link } = await import("./tools/link.js");
   const { updateConstraint } = await import("./tools/update-constraint.js");
   const { exportConstraints } = await import("./tools/export.js");
-  const { getDbPath, closeDb } = await import("./db/connection.js");
+  const { getDbPath, closeDb, checkpoint } = await import("./db/connection.js");
   const fmt = await import("./cli/format.js");
 
   const server = new McpServer({
@@ -69,6 +69,7 @@ async function startServer(): Promise<void> {
     },
     async (input) => {
       const rejection = reject(input);
+      checkpoint();
       return {
         content: [{ type: "text", text: fmt.formatRejectionResult(rejection) }],
         structuredContent: { ...rejection },
@@ -94,6 +95,7 @@ async function startServer(): Promise<void> {
     },
     async (input) => {
       const constraint = constrain(input);
+      checkpoint();
       return {
         content: [{ type: "text", text: fmt.formatConstraintCreated(constraint) }],
         structuredContent: { ...constraint },
@@ -141,6 +143,7 @@ async function startServer(): Promise<void> {
     },
     async (input) => {
       const result = applied(input);
+      checkpoint();
       return {
         content: [{ type: "text", text: fmt.formatAppliedResult(result) }],
         structuredContent: { constraint_id: input.constraint_id, ...result },
@@ -157,6 +160,7 @@ async function startServer(): Promise<void> {
     },
     async (input) => {
       const result = link(input);
+      checkpoint();
       return {
         content: [{ type: "text", text: fmt.formatLinkResult(result) }],
         structuredContent: { ...result },
@@ -180,6 +184,7 @@ async function startServer(): Promise<void> {
     },
     async (input) => {
       const constraint = updateConstraint(input);
+      checkpoint();
       return {
         content: [{ type: "text", text: fmt.formatUpdateResult(constraint) }],
         structuredContent: { ...constraint },
